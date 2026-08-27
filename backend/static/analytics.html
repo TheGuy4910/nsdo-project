@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NSDO — Analytics</title>
+  <link rel="stylesheet" href="nsdo.css">
+  <style>
+    /* ---- Comparability verdict badges ---- */
+    .verdict-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-family: var(--mono); font-size: 10px; font-weight: 600;
+      letter-spacing: .08em; text-transform: uppercase;
+      padding: 3px 9px; border-radius: 3px; white-space: nowrap;
+    }
+    .verdict-badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .8; }
+    .verdict-comparable         { background: var(--green-light); color: var(--green); border: 1px solid #5BBF8A; }
+    .verdict-methodology_differs{ background: var(--amber-light); color: var(--amber); border: 1px solid #E6A835; }
+    .verdict-incomparable       { background: var(--red-light); color: var(--red); border: 1px solid #D45555; }
+
+    /* ---- Comparability warning box ---- */
+    .comparability-warn {
+      background: var(--amber-light); border: 1.5px solid #E6A835;
+      border-radius: var(--radius); padding: 14px 16px;
+      font-size: 13px; color: #7A4C05; line-height: 1.6;
+      margin: 16px 0;
+    }
+    .comparability-warn strong { font-weight: 700; }
+    .comparability-warn .reason { margin-top: 6px; }
+
+    /* ---- Trend chart ---- */
+    .chart-wrap { position: relative; height: 280px; padding: 8px 0 0; }
+    .chart-svg   { width: 100%; height: 100%; overflow: visible; }
+    .chart-legend{ display:flex;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;margin-top:10px; }
+    .chart-legend-item{ display:flex;align-items:center;gap:6px;color:var(--slate); }
+    .chart-legend-dot { width:8px;height:8px;border-radius:50%;flex-shrink:0; }
+    .chart-legend-open{ width:8px;height:8px;border-radius:50%;flex-shrink:0;border:2px solid currentColor; }
+    .chart-tooltip{
+      position:fixed;z-index:200;background:var(--navy);color:#fff;
+      padding:8px 12px;border-radius:var(--radius);font-family:var(--mono);font-size:12px;
+      line-height:1.6;pointer-events:none;white-space:nowrap;box-shadow:var(--shadow-lg);display:none;
+    }
+
+    /* ---- Country selector ---- */
+    .country-checks { display: flex; flex-wrap: wrap; gap: 10px; }
+    .country-check-label {
+      display: flex; align-items: center; gap: 7px; cursor: pointer;
+      font-size: 13.5px; padding: 6px 12px;
+      border: 1.5px solid var(--rule); border-radius: var(--radius);
+      background: var(--surface); transition: all var(--transition);
+    }
+    .country-check-label:has(input:checked) { border-color: var(--navy); background: var(--navy-faint); }
+    .country-check-label input { width: 14px; height: 14px; cursor: pointer; }
+    .country-check-swatch { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ---- Snapshot table extras ---- */
+    .comparable-list { font-size: 11.5px; color: var(--slate); font-family: var(--mono); }
+    .no-compare-note { font-size: 11.5px; color: var(--stone); font-style: italic; }
+
+    /* ---- Growth table ---- */
+    .growth-positive { color: var(--green); font-family: var(--mono); }
+    .growth-negative { color: var(--red);   font-family: var(--mono); }
+    .growth-null     { color: var(--stone); font-family: var(--mono); }
+  </style>
+</head>
+<body class="site-wrap">
+<div id="nav-placeholder"></div>
+<div class="chart-tooltip" id="tooltip"></div>
+
+<main class="page-content">
+  <header class="page-header">
+    <p class="page-eyebrow">Analytics</p>
+    <h1 class="page-title">Trend & Comparison Analysis</h1>
+    <p class="page-subtitle">
+      Each figure is linked to its source, metric definition, and reliability tier.
+      Comparability warnings are shown whenever series use different measurement instruments.
+    </p>
+  </header>
+
+  <!-- ===== Section 1: Trend explorer ===== -->
+  <section class="card section-gap">
+    <div class="card-header">
+      <span class="card-title">Trend Explorer</span>
+      <span style="font-size:12px;color:var(--stone)">One metric at a time</span>
+    </div>
+    <div class="card-body">
+      <div class="filter-bar" style="flex-wrap:wrap;gap:16px;padding-top:0">
+        <div class="form-group">
+          <label class="form-label">Countries</label>
+          <div class="country-checks" id="country-checks">
+            <div class="spinner" style="margin:4px"></div>
+          </div>
+        </div>
+        <div class="form-group" style="min-width:280px">
+          <label class="form-label">Metric definition</label>
+          <select id="metric-select" class="form-select">
+            <option value="">Loading…</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:none">
+          <label class="form-label">&nbsp;</label>
+          <button class="btn btn-primary" id="btn-load-trend" onclick="loadTrend()">Load trend →</button>
+        </div>
+      </div>
+
+      <div id="trend-comparability-warn" class="hidden"></div>
+      <div id="trend-error" class="hidden"></div>
+
+      <div class="chart-wrap" id="trend-chart-wrap">
+        <svg class="chart-svg" id="trend-chart" role="img" aria-label="Trend chart"></svg>
+      </div>
+      <div class="chart-legend" id="trend-legend"></div>
+
+      <div id="trend-series-note" class="hidden provenance-note" style="margin-top:12px"></div>
+    </div>
+  </section>
+
+  <!-- ===== Section 2: Country snapshot ===== -->
+  <section class="card section-gap">
+    <div class="card-header">
+      <span class="card-title">Country Snapshot</span>
+      <span style="font-size:12px;color:var(--stone)">Most recent observation per country, with comparability</span>
+    </div>
+    <div class="card-body" style="padding:0">
+      <div id="snapshot-loading" class="state-container">
+        <div class="spinner"></div>
+        <p class="state-body">Loading snapshot…</p>
+      </div>
+      <div class="table-wrap" id="snapshot-table-wrap" class="hidden">
+        <table>
+          <thead><tr>
+            <th>Country</th>
+            <th>Period</th>
+            <th>Value</th>
+            <th>Source</th>
+            <th>Reliability</th>
+            <th>Metric</th>
+            <th>Comparable to</th>
+          </tr></thead>
+          <tbody id="snapshot-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Section 3: Growth rates ===== -->
+  <section class="card section-gap">
+    <div class="card-header">
+      <span class="card-title">Period-over-Period Growth</span>
+      <span style="font-size:12px;color:var(--stone)">Within a single metric series — not cross-country</span>
+    </div>
+    <div class="card-body">
+      <div class="filter-bar" style="padding-top:0">
+        <div class="form-group">
+          <label class="form-label">Country</label>
+          <select id="growth-country-select" class="form-select" style="min-width:200px">
+            <option value="">Select country…</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:none">
+          <label class="form-label">&nbsp;</label>
+          <button class="btn btn-outline" id="btn-load-growth" onclick="loadGrowth()">Load growth</button>
+        </div>
+      </div>
+      <div id="growth-warn" class="hidden"></div>
+      <div id="growth-error" class="hidden"></div>
+      <div class="table-wrap" id="growth-table-wrap" style="display:none">
+        <table>
+          <thead><tr>
+            <th>Period</th>
+            <th>Enrolled</th>
+            <th>Change</th>
+            <th>% Change</th>
+            <th>Reliability</th>
+            <th>Note</th>
+          </tr></thead>
+          <tbody id="growth-tbody"></tbody>
+        </table>
+      </div>
+      <p class="provenance-note" style="margin-top:12px">
+        Growth figures are computed within a single metric series. Do not compare
+        UK growth to US growth directly — different instruments, different populations.
+        Percent change uses round-half-even, 2 decimal places.
+      </p>
+    </div>
+  </section>
+
+  <!-- ===== Comparability reference ===== -->
+  <section class="card section-gap">
+    <div class="card-header">
+      <span class="card-title">Metric Comparability Reference</span>
+    </div>
+    <div class="card-body">
+      <div class="alert alert-warn" style="margin-bottom:16px">
+        <strong>Core methodological constraint:</strong>
+        Direct numerical comparison is only valid between figures using the same
+        metric_definition_id. Numbers from HESA (UK enrolled headcount) and IIE
+        Open Doors (US SEVIS-derived count) measure similar but non-identical
+        populations via different instruments — they are not like-for-like.
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Metric code</th><th>Name</th><th>Unit</th><th>Comparability class</th></tr></thead>
+          <tbody id="metric-ref-tbody">
+            <tr><td colspan="4" style="text-align:center;padding:24px">
+              <div class="spinner" style="margin:0 auto"></div>
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="nsdo.js"></script>
+<script>
+const { apiFetch, fmt, el, tierBadge, renderError, navHTML, initNav } = window.NSDO;
+
+document.getElementById('nav-placeholder').innerHTML = navHTML('analytics');
+initNav('analytics');
+
+// ── Palette: consistent colours per country ───────────────────────────────
+const COUNTRY_COLORS = {
+  'United Kingdom': '#1B2B4B',
+  'United States':  '#1A7A4A',
+  'Canada':         '#D4820A',
+  'Malaysia':       '#8B3DC2',
+};
+function countryColor(c) {
+  return COUNTRY_COLORS[c] || '#5A6478';
+}
+
+// ── State ─────────────────────────────────────────────────────────────────
+let state = {
+  snapshot: [],
+  metrics: [],
+  selectedCountries: new Set(),
+  selectedMetricId: null,
+};
+
+// ── Init ──────────────────────────────────────────────────────────────────
+async function init() {
+  const [snapRes, metRes] = await Promise.all([
+    apiFetch('/api/analytics/snapshot'),
+    apiFetch('/api/metric-definitions'),
+  ]);
+
+  if (!snapRes.ok) {
+    renderError(document.getElementById('snapshot-loading'),
+      'Backend unavailable. Run docker compose up --build.');
+    return;
+  }
+
+  state.snapshot = snapRes.data.snapshot || [];
+  state.metrics  = metRes.ok ? metRes.data : [];
+
+  renderCountryChecks();
+  renderMetricSelect();
+  renderSnapshot();
+  renderGrowthCountrySelect();
+  renderMetricRef();
+}
+
+function renderCountryChecks() {
+  const container = document.getElementById('country-checks');
+  container.innerHTML = '';
+  const countries = [...new Set(state.snapshot.map(e => e.country))].sort();
+  countries.forEach(c => {
+    const color = countryColor(c);
+    const label = el('label', { class: 'country-check-label' },
+      (() => { const inp = el('input', { type: 'checkbox', value: c });
+        inp.addEventListener('change', () => {
+          if (inp.checked) state.selectedCountries.add(c);
+          else state.selectedCountries.delete(c);
+        });
+        return inp; })(),
+      el('span', { class: 'country-check-swatch', style: { background: color } }),
+      c,
+    );
+    container.appendChild(label);
+  });
+  // Default: select UK and US
+  container.querySelectorAll('input[type=checkbox]').forEach(inp => {
+    if (inp.value === 'United Kingdom' || inp.value === 'United States') {
+      inp.checked = true;
+      state.selectedCountries.add(inp.value);
+    }
+  });
+}
+
+function renderMetricSelect() {
+  const sel = document.getElementById('metric-select');
+  sel.innerHTML = '<option value="">All available metrics</option>';
+  state.metrics.forEach(m => {
+    sel.appendChild(el('option', { value: m.id }, `${m.code} — ${m.name}`));
+  });
+  sel.addEventListener('change', () => {
+    state.selectedMetricId = sel.value ? parseInt(sel.value) : null;
+  });
+}
+
+function renderGrowthCountrySelect() {
+  const sel = document.getElementById('growth-country-select');
+  sel.innerHTML = '<option value="">Select country…</option>';
+  const countries = [...new Set(state.snapshot.map(e => e.country))].sort();
+  countries.forEach(c => sel.appendChild(el('option', { value: c }, c)));
+}
+
+function renderMetricRef() {
+  const tbody = document.getElementById('metric-ref-tbody');
+  tbody.innerHTML = '';
+  const METRIC_CLASS = {
+    'hesa_enrolled_headcount':  { label: 'Enrolled headcount', cls: 'verdict-comparable' },
+    'sevis_enrolled_headcount': { label: 'Enrolled headcount', cls: 'verdict-comparable' },
+    'press_reported_enrollment':{ label: 'Methodology unconfirmed', cls: 'verdict-methodology_differs' },
+    'unverified_market_estimate':{ label: 'Incomparable', cls: 'verdict-incomparable' },
+    'unesco_outbound_mobility': { label: 'Incomparable (global aggregate)', cls: 'verdict-incomparable' },
+  };
+  if (!state.metrics.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="color:var(--stone);text-align:center;padding:16px">No metric definitions loaded.</td></tr>';
+    return;
+  }
+  state.metrics.forEach(m => {
+    const info = METRIC_CLASS[m.code] || { label: '—', cls: '' };
+    tbody.appendChild(el('tr', {},
+      el('td', { class: 'td-mono', style: { fontSize: '12px' } }, m.code),
+      el('td', {}, m.name),
+      el('td', { class: 'td-mono', style: { fontSize: '12px' } }, m.unit),
+      el('td', {}, el('span', { class: `verdict-badge ${info.cls}` }, info.label)),
+    ));
+  });
+}
+
+// ── Snapshot table ────────────────────────────────────────────────────────
+function renderSnapshot() {
+  document.getElementById('snapshot-loading').style.display = 'none';
+  const wrap = document.getElementById('snapshot-table-wrap');
+  wrap.classList.remove('hidden');
+  const tbody = document.getElementById('snapshot-tbody');
+  tbody.innerHTML = '';
+
+  state.snapshot.forEach(e => {
+    const comparableCell = e.excluded_from_comparison
+      ? el('td', {}, el('span', { class: 'verdict-badge verdict-incomparable' }, 'Excluded'))
+      : e.comparable_to.length
+        ? el('td', { class: 'comparable-list' }, e.comparable_to.join(', '))
+        : el('td', { class: 'no-compare-note' }, 'No shared metric');
+
+    tbody.appendChild(el('tr', {},
+      el('td', { style: { fontWeight: '500' } }, e.country),
+      el('td', { class: 'td-mono' }, e.period),
+      el('td', { class: 'td-mono' }, e.value != null ? fmt.number(Math.round(e.value)) : '—'),
+      el('td', {}, el('div', { style: { fontWeight: '500', fontSize: '13px' } }, e.source_short_code)),
+      el('td', {}, tierBadge(e.reliability_tier)),
+      el('td', { class: 'td-mono', style: { fontSize: '11.5px', color: 'var(--slate)' } }, e.metric_code),
+      comparableCell,
+    ));
+  });
+}
+
+// ── Trend chart ───────────────────────────────────────────────────────────
+async function loadTrend() {
+  const warnDiv  = document.getElementById('trend-comparability-warn');
+  const errDiv   = document.getElementById('trend-error');
+  const noteDiv  = document.getElementById('trend-series-note');
+  const svg      = document.getElementById('trend-chart');
+  const legend   = document.getElementById('trend-legend');
+  warnDiv.classList.add('hidden');
+  errDiv.classList.add('hidden');
+  noteDiv.classList.add('hidden');
+  svg.innerHTML = '';
+  legend.innerHTML = '';
+
+  const countries = [...state.selectedCountries];
+  if (countries.length === 0) {
+    errDiv.innerHTML = '';
+    errDiv.appendChild(el('div', { class: 'alert alert-warn' }, 'Select at least one country.'));
+    errDiv.classList.remove('hidden');
+    return;
+  }
+
+  // Fetch a trend series for each selected country
+  const seriesResults = await Promise.all(countries.map(async c => {
+    const params = state.selectedMetricId ? `?metric_definition_id=${state.selectedMetricId}` : '';
+    const res = await apiFetch(`/api/analytics/trend?country=${encodeURIComponent(c)}${params}`);
+    return { country: c, res };
+  }));
+
+  const errors = seriesResults.filter(r => !r.res.ok && r.res.status !== 409);
+  if (errors.length === countries.length) {
+    renderError(errDiv, 'Could not load trend data.');
+    errDiv.classList.remove('hidden');
+    return;
+  }
+
+  // Handle 409 (multiple metrics available for that country)
+  const multiMetric = seriesResults.filter(r => r.res.status === 409);
+  if (multiMetric.length) {
+    const msgs = multiMetric.map(r =>
+      `${r.country}: ${r.res.data?.detail?.message || 'multiple metrics available'}`
+    ).join('\n');
+    errDiv.innerHTML = '';
+    errDiv.appendChild(el('div', { class: 'alert alert-warn' },
+      'Some countries have multiple metrics — select a specific metric definition above. ',
+      el('br'),
+      el('span', { class: 'td-mono', style: { fontSize: '12px' } }, msgs)
+    ));
+    errDiv.classList.remove('hidden');
+    return;
+  }
+
+  const validSeries = seriesResults
+    .filter(r => r.res.ok)
+    .map(r => ({ country: r.country, ...r.res.data.trend }));
+
+  // Comparability check across all fetched series
+  const compatRes = await apiFetch('/api/analytics/dashboard-comparability');
+  if (compatRes.ok) {
+    const compat = compatRes.data.comparability;
+    if (!compat.all_comparable) {
+      warnDiv.innerHTML = '';
+      const box = el('div', { class: 'comparability-warn' },
+        el('strong', {}, verdictLabel(compat.verdict) + ' — '),
+        el('span', { class: 'reason' }, compat.reason),
+      );
+      warnDiv.appendChild(box);
+      warnDiv.classList.remove('hidden');
+    }
+  }
+
+  // Check for profile_varies within any series
+  const profileNote = validSeries.find(s => s.series_comparability === 'profile_varies');
+  if (profileNote) {
+    noteDiv.textContent = profileNote.series_note;
+    noteDiv.classList.remove('hidden');
+  }
+
+  renderTrendChart(validSeries);
+}
+
+function verdictLabel(v) {
+  return { comparable: 'Comparable', methodology_differs: 'Methodology differs', incomparable: 'Incomparable' }[v] || v;
+}
+
+function renderTrendChart(seriesList) {
+  const svg    = document.getElementById('trend-chart');
+  const legend = document.getElementById('trend-legend');
+  const tip    = document.getElementById('tooltip');
+  const ns     = 'http://www.w3.org/2000/svg';
+
+  if (!seriesList.length || seriesList.every(s => !s.points?.length)) {
+    svg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="var(--stone)" font-size="13">No data to display</text>';
+    return;
+  }
+
+  const allPts = seriesList.flatMap(s => s.points.filter(p => p.value != null));
+  if (!allPts.length) {
+    svg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="var(--stone)" font-size="13">All periods are gaps — no values to chart</text>';
+    return;
+  }
+
+  // Collect all periods that appear in any series
+  const allPeriods = [
+    ...new Set(seriesList.flatMap(s => s.points.map(p => p.period)))
+  ].sort((a, b) => {
+    const ka = periodSortKey(a), kb = periodSortKey(b);
+    return ka[0] !== kb[0] ? ka[0] - kb[0] : ka[1] - kb[1];
+  });
+
+  const maxY = Math.ceil(Math.max(...allPts.map(p => p.value)) * 1.12);
+  const W = 820, H = 260;
+  const PAD = { top: 14, right: 24, bottom: 38, left: 62 };
+  const pW = W - PAD.left - PAD.right, pH = H - PAD.top - PAD.bottom;
+
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = '';
+  legend.innerHTML = '';
+
+  const mk = (tag, attrs) => {
+    const e = document.createElementNS(ns, tag);
+    Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v));
+    return e;
+  };
+  const xS = p => PAD.left + (allPeriods.indexOf(p) / Math.max(allPeriods.length - 1, 1)) * pW;
+  const yS = v => PAD.top + pH - (v / maxY) * pH;
+
+  // Grid lines
+  [0, .25, .5, .75, 1].forEach(f => {
+    const tick = Math.round(f * maxY), y = yS(tick);
+    svg.appendChild(mk('line', { x1: PAD.left, y1: y, x2: PAD.left + pW, y2: y,
+      stroke: 'var(--rule)', 'stroke-width': '1', 'stroke-dasharray': '3 3' }));
+    const t = mk('text', { x: PAD.left - 6, y: y + 4, 'text-anchor': 'end',
+      'font-size': '10', 'font-family': "'DM Mono',monospace", fill: 'var(--stone)' });
+    t.textContent = tick >= 1000 ? (tick / 1000).toFixed(0) + 'k' : tick;
+    svg.appendChild(t);
+  });
+
+  // X labels
+  allPeriods.forEach(p => {
+    const t = mk('text', { x: xS(p), y: H - 4, 'text-anchor': 'middle',
+      'font-size': '10', 'font-family': "'DM Mono',monospace", fill: 'var(--stone)' });
+    t.textContent = p; svg.appendChild(t);
+  });
+
+  // Series
+  seriesList.forEach(series => {
+    const color = countryColor(series.country);
+    const pts = series.points;
+
+    // Draw connected line segments between consecutive non-gap points
+    for (let i = 1; i < pts.length; i++) {
+      const prev = pts[i - 1], curr = pts[i];
+      if (prev.value == null || curr.value == null) continue;
+      svg.appendChild(mk('line', {
+        x1: xS(prev.period), y1: yS(prev.value),
+        x2: xS(curr.period),  y2: yS(curr.value),
+        stroke: color, 'stroke-width': '2.5',
+        'stroke-linecap': 'round',
+      }));
+    }
+
+    // Points
+    pts.forEach(pt => {
+      if (pt.is_gap) {
+        // Hollow circle for gap
+        const dot = mk('circle', { cx: xS(pt.period), cy: yS(0) + pH/2,
+          r: '4', fill: '#fff', stroke: color, 'stroke-width': '1.5',
+          opacity: '0.4' });
+        svg.appendChild(dot);
+        return;
+      }
+      const dot = mk('circle', { cx: xS(pt.period), cy: yS(pt.value),
+        r: '4.5', fill: color, style: 'cursor:pointer' });
+      dot.addEventListener('mouseenter', e => {
+        tip.style.display = 'block';
+        tip.innerHTML = `<strong>${series.country}</strong><br>${pt.period}: ${fmt.number(Math.round(pt.value))}<br>${pt.reliability_tier || ''}`;
+        moveTip(e);
+      });
+      dot.addEventListener('mousemove', moveTip);
+      dot.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+      svg.appendChild(dot);
+    });
+
+    legend.appendChild(el('span', { class: 'chart-legend-item' },
+      el('span', { class: 'chart-legend-dot', style: { background: color } }),
+      `${series.country} (${series.metric_code || '—'})`,
+    ));
+  });
+}
+
+function periodSortKey(p) {
+  const m = p.match(/(\d{4})/);
+  const year = m ? parseInt(m[1]) : 9999;
+  const m2 = p.match(/\/(\d{2})/);
+  const suf = m2 ? parseInt(m2[1]) : 0;
+  return [year, suf];
+}
+
+function moveTip(e) {
+  const t = document.getElementById('tooltip');
+  t.style.left = (e.clientX + 14) + 'px';
+  t.style.top  = (e.clientY - 36) + 'px';
+}
+
+// ── Growth table ─────────────────────────────────────────────────────────
+async function loadGrowth() {
+  const country = document.getElementById('growth-country-select').value;
+  const errDiv  = document.getElementById('growth-error');
+  const warnDiv = document.getElementById('growth-warn');
+  const wrap    = document.getElementById('growth-table-wrap');
+  errDiv.classList.add('hidden');
+  warnDiv.classList.add('hidden');
+  wrap.style.display = 'none';
+
+  if (!country) {
+    errDiv.innerHTML = '';
+    errDiv.appendChild(el('div', { class: 'alert alert-warn' }, 'Select a country first.'));
+    errDiv.classList.remove('hidden');
+    return;
+  }
+
+  const res = await apiFetch(`/api/analytics/growth?country=${encodeURIComponent(country)}`);
+  if (!res.ok) {
+    if (res.status === 409) {
+      warnDiv.innerHTML = '';
+      warnDiv.appendChild(el('div', { class: 'alert alert-warn' },
+        res.data?.detail?.message || 'Multiple metrics available — select a metric on the Trend tab first.'
+      ));
+      warnDiv.classList.remove('hidden');
+      return;
+    }
+    renderError(errDiv, res.data?.detail || 'Could not load growth data.');
+    errDiv.classList.remove('hidden');
+    return;
+  }
+
+  const data = res.data;
+  const tbody = document.getElementById('growth-tbody');
+  tbody.innerHTML = '';
+
+  data.growth.forEach(pt => {
+    const pct = pt.percent_change;
+    const pctCell = pct == null
+      ? el('td', { class: 'growth-null' }, '—')
+      : el('td', { class: pct >= 0 ? 'growth-positive' : 'growth-negative' },
+          (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%'
+        );
+    const absCell = pt.absolute_change == null
+      ? el('td', { class: 'growth-null' }, '—')
+      : el('td', { class: pt.absolute_change >= 0 ? 'growth-positive' : 'growth-negative' },
+          (pt.absolute_change >= 0 ? '+' : '') + fmt.number(Math.round(pt.absolute_change))
+        );
+
+    tbody.appendChild(el('tr', {},
+      el('td', { class: 'td-mono' }, pt.period),
+      el('td', { class: 'td-mono' }, pt.value != null ? fmt.number(Math.round(pt.value)) : '—'),
+      absCell,
+      pctCell,
+      el('td', {}, pt.reliability_tier
+        ? el('span', { class: `tier tier-${pt.reliability_tier}` }, fmt.tier(pt.reliability_tier))
+        : el('span', { style: { color: 'var(--stone)' } }, '—')),
+      el('td', { style: { fontSize: '11.5px', color: 'var(--stone)', maxWidth: '200px' } },
+        pt.note || ''),
+    ));
+  });
+
+  wrap.style.display = '';
+}
+
+init();
+</script>
+</body>
+</html>

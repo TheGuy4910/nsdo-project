@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NSDO — Admin</title>
+  <link rel="stylesheet" href="nsdo.css">
+  <style>
+    .admin-gate {
+      max-width: 480px; margin: 80px auto; text-align: center; padding: 0 24px;
+    }
+    .admin-gate-title { font-size: 20px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+    .admin-gate-sub   { font-size: 14px; color: var(--stone); margin-bottom: 24px; }
+
+    .seed-panel { max-width: 720px; }
+
+    /* Result table */
+    .seed-result-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
+    .seed-result-table th {
+      font-family: var(--mono); font-size: 10.5px; font-weight: 600;
+      letter-spacing: .08em; text-transform: uppercase; color: var(--stone);
+      padding: 6px 12px; text-align: left; border-bottom: 1px solid var(--rule);
+    }
+    .seed-result-table td { padding: 8px 12px; border-bottom: 1px solid var(--rule); }
+    .seed-result-table tr:last-child td { border-bottom: none; }
+    .n-ok   { font-family: var(--mono); color: var(--green); font-weight: 600; }
+    .n-skip { font-family: var(--mono); color: var(--stone); }
+    .n-warn { font-family: var(--mono); color: var(--amber); font-weight: 600; }
+
+    /* Conflict list */
+    .conflict-list { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+    .conflict-item {
+      background: var(--red-light); border: 1px solid #D45555;
+      border-radius: var(--radius); padding: 10px 14px;
+      font-size: 12.5px; color: var(--red); font-family: var(--mono);
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body class="site-wrap">
+<div id="nav-placeholder"></div>
+
+<main class="page-content">
+  <header class="page-header">
+    <p class="page-eyebrow">Admin</p>
+    <h1 class="page-title">Admin Panel</h1>
+    <p class="page-subtitle">Admin-only operations. All read (GET) endpoints remain public.</p>
+  </header>
+
+  <!-- Auth gate — shown until sign-in check completes -->
+  <div id="auth-loading" class="state-container">
+    <div class="spinner"></div>
+    <p class="state-body">Checking authentication…</p>
+  </div>
+
+  <!-- Not signed in -->
+  <div id="not-signed-in" class="hidden">
+    <div class="admin-gate">
+      <div class="admin-gate-title">Sign in required</div>
+      <div class="admin-gate-sub">This page is restricted to admin users.</div>
+      <a href="login.html?next=admin.html" class="btn btn-primary">Sign in →</a>
+    </div>
+  </div>
+
+  <!-- Not admin (signed in but viewer role) -->
+  <div id="not-admin" class="hidden">
+    <div class="admin-gate">
+      <div class="admin-gate-title">Admin access required</div>
+      <div class="admin-gate-sub" id="not-admin-sub">Your account does not have admin privileges.</div>
+      <a href="index.html" class="btn btn-outline">← Back to dashboard</a>
+    </div>
+  </div>
+
+  <!-- Admin content -->
+  <div id="admin-content" class="hidden">
+
+    <!-- Seed section -->
+    <section class="card seed-panel section-gap">
+      <div class="card-header">
+        <span class="card-title">Database seed</span>
+        <span style="font-size:12px;color:var(--stone)">POST /api/admin/seed</span>
+      </div>
+      <div class="card-body">
+        <p style="font-size:13.5px;color:var(--text);margin-bottom:16px;line-height:1.6">
+          Loads the reference seed data (sources, metric definitions, and the 11 verified datasets)
+          into the database. <strong>Idempotent</strong> — safe to run multiple times.
+          Missing rows are inserted; identical existing rows are skipped; conflicting rows are
+          reported as errors and nothing is written.
+        </p>
+
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px">
+          <button class="btn btn-primary" id="btn-seed" onclick="runSeed()">
+            Run seed
+          </button>
+          <div id="seed-spinner" class="hidden" style="display:flex;align-items:center;gap:8px">
+            <div class="spinner"></div>
+            <span style="font-size:13px;color:var(--stone)">Seeding…</span>
+          </div>
+        </div>
+
+        <div id="seed-result" class="hidden"></div>
+      </div>
+    </section>
+
+    <!-- Current user info -->
+    <section class="card section-gap" style="max-width:720px">
+      <div class="card-header"><span class="card-title">Signed in as</span></div>
+      <div class="card-body">
+        <div style="display:flex;gap:24px;flex-wrap:wrap">
+          <div>
+            <div style="font-family:var(--mono);font-size:10.5px;color:var(--stone);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Username</div>
+            <div id="me-username" style="font-size:15px;font-weight:600;color:var(--navy)">—</div>
+          </div>
+          <div>
+            <div style="font-family:var(--mono);font-size:10.5px;color:var(--stone);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Role</div>
+            <div id="me-role" style="font-size:15px;font-weight:600;color:var(--navy)">—</div>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <button class="btn btn-outline btn-sm" onclick="window.NSDO.auth.signOut()">Sign out</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<script src="nsdo.js"></script>
+<script>
+const { apiFetch, el, navHTML, initNav, auth } = window.NSDO;
+
+document.getElementById('nav-placeholder').innerHTML = navHTML('admin');
+initNav('admin');
+
+async function checkAuth() {
+  // Not signed in at all
+  if (!auth.isSignedIn()) {
+    document.getElementById('auth-loading').classList.add('hidden');
+    document.getElementById('not-signed-in').classList.remove('hidden');
+    return;
+  }
+
+  // Check role via /api/auth/me
+  const res = await apiFetch('/api/auth/me');
+  document.getElementById('auth-loading').classList.add('hidden');
+
+  if (!res.ok) {
+    // Token expired or invalid
+    auth.clearToken();
+    document.getElementById('not-signed-in').classList.remove('hidden');
+    return;
+  }
+
+  const me = res.data;
+  if (me.role !== 'admin') {
+    document.getElementById('not-admin-sub').textContent =
+      `Signed in as "${me.username}" (role: ${me.role}). Admin role required.`;
+    document.getElementById('not-admin').classList.remove('hidden');
+    return;
+  }
+
+  // Admin — show content
+  document.getElementById('me-username').textContent = me.username;
+  document.getElementById('me-role').textContent = me.role;
+  document.getElementById('admin-content').classList.remove('hidden');
+}
+
+async function runSeed() {
+  const btn       = document.getElementById('btn-seed');
+  const spinner   = document.getElementById('seed-spinner');
+  const resultDiv = document.getElementById('seed-result');
+
+  btn.disabled = true;
+  spinner.classList.remove('hidden');
+  resultDiv.classList.add('hidden');
+  resultDiv.innerHTML = '';
+
+  const res = await apiFetch('/api/admin/seed', { method: 'POST' });
+
+  btn.disabled = false;
+  spinner.classList.add('hidden');
+  resultDiv.classList.remove('hidden');
+
+  if (res.ok) {
+    // Success — show counts table
+    const counts = res.data.counts;
+    const tables = ['sources', 'metric_definitions', 'datasets', 'observations'];
+    const tableLabels = {
+      sources: 'Sources', metric_definitions: 'Metric definitions',
+      datasets: 'Datasets', observations: 'Observations',
+    };
+
+    const tbody = el('tbody');
+    let anyConflict = false;
+    tables.forEach(t => {
+      const c = counts[t] || { inserted: 0, skipped: 0, conflicts: [] };
+      if (c.conflicts?.length) anyConflict = true;
+      tbody.appendChild(el('tr', {},
+        el('td', {}, tableLabels[t]),
+        el('td', { class: 'n-ok' }, String(c.inserted)),
+        el('td', { class: 'n-skip' }, String(c.skipped)),
+        el('td', { class: c.conflicts?.length ? 'n-warn' : 'n-skip' },
+          String(c.conflicts?.length ?? 0)),
+      ));
+    });
+
+    const table = el('table', { class: 'seed-result-table' },
+      el('thead', {}, el('tr', {},
+        el('th', {}, 'Table'),
+        el('th', {}, 'Inserted'),
+        el('th', {}, 'Skipped'),
+        el('th', {}, 'Conflicts'),
+      )),
+      tbody,
+    );
+
+    resultDiv.appendChild(el('div', { class: 'alert alert-success', style: { marginBottom: '12px' } },
+      `Seed complete — ${anyConflict ? 'with conflicts (see below)' : 'no conflicts'}.`
+    ));
+    resultDiv.appendChild(table);
+
+  } else if (res.status === 409) {
+    // Conflict — show the specific conflict messages
+    const detail = res.data?.detail ?? {};
+    const conflicts = detail.conflicts ?? [];
+    const counts = detail.counts ?? {};
+
+    resultDiv.appendChild(el('div', { class: 'alert alert-error', style: { marginBottom: '12px' } },
+      el('strong', {}, 'Seed conflict — no data was written. '),
+      detail.message ?? 'Existing rows conflict with seed expectations.',
+    ));
+
+    if (conflicts.length) {
+      const list = el('div', { class: 'conflict-list' });
+      conflicts.forEach(c => list.appendChild(el('div', { class: 'conflict-item' }, c)));
+      resultDiv.appendChild(el('div', { style: { marginTop: '8px' } },
+        el('div', { style: { fontSize: '12px', color: 'var(--stone)', marginBottom: '8px', fontFamily: 'var(--mono)', textTransform: 'uppercase', letterSpacing: '.08em' } },
+          `${conflicts.length} conflict${conflicts.length !== 1 ? 's' : ''}`
+        ),
+        list,
+      ));
+    }
+
+    // Show counts even on 409 (how many rows were checked before conflict)
+    if (Object.keys(counts).length) {
+      const tables = ['sources', 'metric_definitions', 'datasets', 'observations'];
+      const tableLabels = { sources: 'Sources', metric_definitions: 'Metric definitions', datasets: 'Datasets', observations: 'Observations' };
+      const tbody = el('tbody');
+      tables.forEach(t => {
+        const c = counts[t] || { inserted: 0, skipped: 0, conflicts: [] };
+        tbody.appendChild(el('tr', {},
+          el('td', {}, tableLabels[t]),
+          el('td', { class: 'n-ok' }, String(c.inserted)),
+          el('td', { class: 'n-skip' }, String(c.skipped)),
+          el('td', { class: c.conflicts?.length ? 'n-warn' : 'n-skip' }, String(c.conflicts?.length ?? 0)),
+        ));
+      });
+      resultDiv.appendChild(el('table', { class: 'seed-result-table', style: { marginTop: '16px' } },
+        el('thead', {}, el('tr', {},
+          el('th', {}, 'Table'), el('th', {}, 'Inserted'), el('th', {}, 'Skipped'), el('th', {}, 'Conflicts'),
+        )),
+        tbody,
+      ));
+    }
+
+  } else {
+    resultDiv.appendChild(el('div', { class: 'alert alert-error' },
+      `Error ${res.status}: ${res.data?.detail ?? res.error ?? 'Unknown error'}`
+    ));
+  }
+}
+
+checkAuth();
+</script>
+</body>
+</html>

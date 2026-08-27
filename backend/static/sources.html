@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NSDO — Sources</title>
+  <link rel="stylesheet" href="nsdo.css">
+  <style>
+    .src-card {
+      background: var(--surface); border: 1px solid var(--rule);
+      border-radius: var(--radius-lg); padding: 20px 24px;
+      box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 10px;
+      transition: box-shadow var(--transition);
+    }
+    .src-card:hover { box-shadow: var(--shadow); }
+    .src-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .src-card-name { font-size: 15px; font-weight: 600; color: var(--navy); }
+    .src-card-code { font-family: var(--mono); font-size: 11px; color: var(--stone); margin-top: 2px; }
+    .src-card-meta { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--text-muted); }
+    .src-card-note { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; }
+    .src-card-datasets { font-family: var(--mono); font-size: 11px; color: var(--stone); }
+    .src-url { color: var(--green); font-size: 12px; word-break: break-all; }
+    .src-url:hover { text-decoration: underline; }
+
+    .tier-section { margin-bottom: 36px; }
+    .tier-section-label {
+      font-family: var(--mono); font-size: 10.5px; font-weight: 500; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--stone);
+      padding: 8px 0; border-bottom: 1px solid var(--rule); margin-bottom: 16px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .tier-count { font-size: 11px; color: var(--stone); font-weight: 400; }
+    .src-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px,1fr)); gap: 16px; }
+  </style>
+</head>
+<body class="site-wrap">
+<div id="nav-placeholder"></div>
+
+<main class="page-content">
+  <header class="page-header">
+    <p class="page-eyebrow">Provenance</p>
+    <h1 class="page-title">Data Sources</h1>
+    <p class="page-subtitle">
+      Every number in the observatory traces to one of these sources.
+      Reliability tier reflects methodology, institutional mandate, and independence from the data subjects.
+    </p>
+  </header>
+
+  <div class="alert alert-info section-gap">
+    <strong>What reliability tiers mean:</strong>&nbsp;
+    <strong>Official Primary</strong> — statutory agency collecting the data directly.
+    <strong>Official Secondary</strong> — compiled from official records by a credible body.
+    <strong>Credible Secondary</strong> — reported by a credible outlet citing primary data, unconfirmed directly.
+    <strong>Unverified</strong> — estimate with no stated methodology; shown for completeness only.
+  </div>
+
+  <div id="sources-loading" class="state-container">
+    <div class="spinner"></div>
+    <p class="state-body">Loading sources…</p>
+  </div>
+  <div id="sources-error" class="hidden"></div>
+  <div id="sources-content" class="hidden"></div>
+</main>
+
+<script src="nsdo.js"></script>
+<script>
+const { apiFetch, fmt, el, tierBadge, renderEmpty, renderError, navHTML, initNav } = window.NSDO;
+
+document.getElementById('nav-placeholder').innerHTML = navHTML('sources');
+initNav('sources');
+
+const TIER_ORDER = ['official_primary','official_secondary','credible_secondary','unverified'];
+const TIER_LABELS = {
+  official_primary:   'Official Primary',
+  official_secondary: 'Official Secondary',
+  credible_secondary: 'Credible Secondary',
+  unverified:         'Unverified',
+};
+
+async function load() {
+  const [srcRes, dsRes] = await Promise.all([
+    apiFetch('/api/sources'),
+    apiFetch('/api/datasets?limit=500'),
+  ]);
+
+  document.getElementById('sources-loading').classList.add('hidden');
+
+  if (!srcRes.ok) {
+    renderError(document.getElementById('sources-error'), 'Could not load sources — backend offline?');
+    document.getElementById('sources-error').classList.remove('hidden');
+    return;
+  }
+
+  const sources  = srcRes.data;
+  const datasets = dsRes.ok ? dsRes.data : [];
+  const dsPerSrc = {};
+  datasets.forEach(d => { dsPerSrc[d.source.id] = (dsPerSrc[d.source.id]||0)+1; });
+
+  const content = document.getElementById('sources-content');
+  content.classList.remove('hidden');
+
+  if (sources.length === 0) {
+    renderEmpty(content, 'No sources registered', 'Import a dataset to register a source.', null);
+    return;
+  }
+
+  // Group by tier
+  const byTier = {};
+  TIER_ORDER.forEach(t => { byTier[t] = []; });
+  sources.forEach(s => { (byTier[s.reliability_tier] = byTier[s.reliability_tier] || []).push(s); });
+
+  TIER_ORDER.forEach(tier => {
+    const srcs = byTier[tier];
+    if (!srcs?.length) return;
+
+    const section = el('div', { class: 'tier-section' },
+      el('div', { class: 'tier-section-label' },
+        tierBadge(tier),
+        el('span', { class: 'tier-count' }, `${srcs.length} source${srcs.length!==1?'s':''}`)
+      ),
+      el('div', { class: 'src-grid' },
+        ...srcs.map(s => {
+          const dsCount = dsPerSrc[s.id] ?? 0;
+          const cardChildren = [
+            el('div', { class: 'src-card-header' },
+              el('div', {},
+                el('div', { class: 'src-card-name' }, s.name),
+                el('div', { class: 'src-card-code' }, s.short_code),
+              ),
+            ),
+            el('div', { class: 'src-card-meta' },
+              s.home_country
+                ? el('span', {}, `Country: ${s.home_country}`)
+                : el('span', {}, 'International / No home country'),
+              el('span', {}, `Type: ${fmt.orgType(s.organization_type)}`),
+              el('span', { class: 'src-card-datasets' }, `${dsCount} dataset${dsCount!==1?'s':''} registered`),
+            ),
+          ];
+          if (s.notes) {
+            cardChildren.push(el('div', { class: 'src-card-note' }, s.notes));
+          }
+          if (s.url) {
+            cardChildren.push(
+              el('a', { class: 'src-url', href: s.url, target: '_blank', rel: 'noopener' }, s.url)
+            );
+          }
+          return el('div', { class: 'src-card' }, ...cardChildren);
+        })
+      )
+    );
+    content.appendChild(section);
+  });
+}
+
+load();
+</script>
+</body>
+</html>

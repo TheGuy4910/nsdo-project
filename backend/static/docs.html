@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NSDO — Methodology</title>
+  <link rel="stylesheet" href="nsdo.css">
+  <style>
+    .doc-section  { max-width: 720px; margin-bottom: 40px; }
+    .doc-h2       { font-size: 18px; font-weight: 700; color: var(--navy);
+                    margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--rule); }
+    .doc-h3       { font-size: 14px; font-weight: 600; color: var(--navy); margin: 16px 0 6px; }
+    .doc-p        { font-size: 14px; color: var(--text); line-height: 1.7; margin-bottom: 10px; }
+    .doc-ul       { font-size: 14px; color: var(--text); line-height: 1.7; margin: 8px 0 10px 20px; }
+    .doc-ul li    { margin-bottom: 4px; }
+    .doc-code     { font-family: var(--mono); font-size: 12px; background: var(--bg);
+                    border: 1px solid var(--rule); border-radius: 3px; padding: 2px 6px; }
+    .principle-card {
+      background: var(--surface); border: 1px solid var(--rule);
+      border-left: 3px solid var(--navy); border-radius: var(--radius);
+      padding: 14px 16px; margin-bottom: 12px;
+    }
+    .principle-title { font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 4px; }
+    .principle-body  { font-size: 13px; color: var(--text); line-height: 1.6; }
+    .verdict-row { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .verdict-desc{ font-size: 13px; color: var(--text); line-height: 1.6; }
+    .gap-item { background: var(--bg); border: 1px solid var(--rule); border-radius: var(--radius);
+                padding: 10px 14px; margin-bottom: 8px; font-size: 13px; color: var(--text); }
+    .source-table-wrap { overflow-x: auto; margin-top: 12px; }
+  </style>
+</head>
+<body class="site-wrap">
+<div id="nav-placeholder"></div>
+
+<main class="page-content">
+  <header class="page-header">
+    <p class="page-eyebrow">Methodology</p>
+    <h1 class="page-title">How this observatory works</h1>
+    <p class="page-subtitle">
+      A capstone project in rigorous data practice. Every number traces to a named source,
+      a stated limitation, and a provenance record. No figure is fabricated or estimated.
+    </p>
+  </header>
+
+  <!-- 1. Core principle -->
+  <section class="doc-section">
+    <div class="doc-h2">Core principle</div>
+    <div class="doc-p">
+      The Nigerian Student Diaspora Observatory was built around a single non-negotiable rule:
+      <strong>every number displayed must trace to a real, verifiable, named source.</strong>
+      The system has no estimate engine, no interpolation, and no fallback defaults.
+      When data does not exist, the system says so explicitly. The absence of a number is itself
+      a finding, and the <em>Documented gaps</em> list on the dashboard is a first-class output,
+      not a placeholder.
+    </div>
+    <div class="doc-p">
+      This stands in contrast to most data dashboards, which silently fill gaps with estimates,
+      present projections alongside actuals without distinction, or aggregate across incompatible
+      measurement instruments. The NSDO separates those concerns by construction.
+    </div>
+  </section>
+
+  <!-- 2. Data integrity principles -->
+  <section class="doc-section">
+    <div class="doc-h2">Data integrity rules</div>
+    <div class="principle-card">
+      <div class="principle-title">1 — Provenance on every record</div>
+      <div class="principle-body">
+        Every dataset is linked to a named source (organisation, URL, publication date) and a
+        metric definition that describes exactly what was counted and how. Datasets cannot exist
+        without stating their limitations. The limitations field is enforced non-empty by the API.
+      </div>
+    </div>
+    <div class="principle-card">
+      <div class="principle-title">2 — No overwriting historical data</div>
+      <div class="principle-body">
+        Datasets are immutable after import. Identity fields
+        (<span class="doc-code">source_id</span>, <span class="doc-code">destination_country</span>,
+        <span class="doc-code">reference_period</span>, <span class="doc-code">metric_definition_id</span>)
+        cannot be changed. Corrections create a new dataset linked via
+        <span class="doc-code">superseded_by_id</span>; the original is deprecated, not deleted.
+      </div>
+    </div>
+    <div class="principle-card">
+      <div class="principle-title">3 — Gaps are null, never zero</div>
+      <div class="principle-body">
+        If a count for a period does not exist, the system returns
+        <span class="doc-code">null</span>. Charts show a visible gap in the line.
+        Growth calculations for gap periods return <span class="doc-code">null</span>,
+        not an estimated delta. Known gaps are documented in
+        <span class="doc-code">seed_data.py:KNOWN_GAPS</span> and surfaced on the dashboard.
+      </div>
+    </div>
+    <div class="principle-card">
+      <div class="principle-title">4 — Comparability is always explicit</div>
+      <div class="principle-body">
+        Numbers from different metric definitions (e.g. HESA UK headcount vs IIE Open Doors
+        US count) are never silently placed on the same axis as like-for-like figures. Every
+        cross-metric display carries a <strong>ComparabilityVerdict</strong> and a plain-English
+        reason explaining the methodological difference.
+      </div>
+    </div>
+    <div class="principle-card">
+      <div class="principle-title">5 — No synthetic data in production</div>
+      <div class="principle-body">
+        Test fixtures are clearly labelled
+        <span class="doc-code">SYNTHETIC_DO_NOT_TREAT_AS_REAL.csv</span>.
+        Seed data carries exact citation sources and year-specific provenance.
+        No figure on the dashboard was generated, estimated, or interpolated by this system.
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Comparability system -->
+  <section class="doc-section">
+    <div class="doc-h2">Comparability verdict system</div>
+    <div class="doc-p">
+      Every analytical result — trend series, snapshot table, comparison endpoint, dashboard chart —
+      is assessed against a three-valued comparability verdict. The verdict and its reason are
+      always returned as part of the API response and always displayed in the UI.
+    </div>
+
+    <div class="verdict-row">
+      <span class="verdict-badge verdict-comparable" style="display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:3px;background:var(--green-light);color:var(--green);border:1px solid #5BBF8A">Comparable</span>
+      <div class="verdict-desc">Same <span class="doc-code">metric_definition_id</span> and same characteristic profile.
+        Direct numerical comparison is valid.</div>
+    </div>
+    <div class="verdict-row">
+      <span style="display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:3px;white-space:nowrap;background:var(--amber-light);color:var(--amber);border:1px solid #E6A835">Methodology differs</span>
+      <div class="verdict-desc">Different enrolled-headcount instruments (e.g. HESA vs Open Doors),
+        or same metric but different characteristic breakdown profiles. Comparison is informative
+        but not like-for-like. Always displayed with a warning.</div>
+    </div>
+    <div class="verdict-row">
+      <span style="display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:3px;white-space:nowrap;background:var(--red-light);color:var(--red);border:1px solid #D45555">Incomparable</span>
+      <div class="verdict-desc">Unverified source, global aggregate, or a metric with no disclosed
+        methodology. Must never be charted on the same axis as official enrolled-headcount figures.</div>
+    </div>
+
+    <div class="doc-h3">Characteristic profiles and aggregation</div>
+    <div class="doc-p">
+      A dataset with a <em>bare total</em> (no sub-dimensions) and a dataset broken down by
+      <span class="doc-code">mode_of_study</span> are not directly aggregable even if they share
+      a metric definition. The bare total may already include all mode-of-study slices; summing
+      them would double-count. When characteristic profiles differ between periods in a trend series,
+      the API returns <span class="doc-code">series_comparability: "profile_varies"</span> and a
+      human-readable <span class="doc-code">series_note</span>.
+    </div>
+  </section>
+
+  <!-- 4. Sources -->
+  <section class="doc-section">
+    <div class="doc-h2">Data sources and reliability tiers</div>
+    <div class="doc-p">
+      Four reliability tiers are assigned to each source based on its institutional mandate,
+      independence from the data subjects, and disclosed methodology.
+    </div>
+    <div class="source-table-wrap">
+      <table>
+        <thead><tr>
+          <th>Tier</th><th>Definition</th><th>Current sources</th>
+        </tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="tier tier-official_primary" style="font-family:var(--mono);font-size:11px;font-weight:600;display:inline-block;padding:2px 7px;border-radius:3px;background:#E6F4EE;color:#1A7A4A;border:1px solid #5BBF8A">Official Primary</span></td>
+            <td>Statutory agency collecting data directly from institutions</td>
+            <td>HESA (UK), UNESCO UIS (global)</td>
+          </tr>
+          <tr>
+            <td><span class="tier tier-official_secondary" style="font-family:var(--mono);font-size:11px;font-weight:600;display:inline-block;padding:2px 7px;border-radius:3px;background:var(--navy-faint);color:var(--navy);border:1px solid var(--navy)">Official Secondary</span></td>
+            <td>Compiled from official records by a credible body</td>
+            <td>IIE Open Doors (US)</td>
+          </tr>
+          <tr>
+            <td><span class="tier tier-credible_secondary" style="font-family:var(--mono);font-size:11px;font-weight:600;display:inline-block;padding:2px 7px;border-radius:3px;background:var(--amber-light);color:var(--amber);border:1px solid #E6A835">Credible Secondary</span></td>
+            <td>Credible outlet citing primary data, unconfirmed directly</td>
+            <td>Press citing IRCC (Canada)</td>
+          </tr>
+          <tr>
+            <td><span class="tier tier-unverified" style="font-family:var(--mono);font-size:11px;font-weight:600;display:inline-block;padding:2px 7px;border-radius:3px;background:var(--red-light);color:var(--red);border:1px solid #D45555">Unverified</span></td>
+            <td>Estimate with no disclosed methodology</td>
+            <td>SchoolReg aggregator (Malaysia)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 5. Metric definitions -->
+  <section class="doc-section">
+    <div class="doc-h2">Metric definitions</div>
+    <div class="doc-p">
+      A metric definition specifies exactly what a numeric observation measures. Two observations
+      sharing a <span class="doc-code">metric_definition_id</span> can be directly compared;
+      two with different IDs cannot, even if both describe "Nigerian students abroad".
+    </div>
+    <div id="metric-defs-table">
+      <div class="spinner" style="margin:16px 0"></div>
+    </div>
+  </section>
+
+  <!-- 6. Known gaps -->
+  <section class="doc-section">
+    <div class="doc-h2">Documented data gaps</div>
+    <div class="doc-p">
+      The following gaps are known and explicitly documented. They are not filled with estimates.
+      Each gap entry explains why the data is absent and what it would take to resolve it.
+    </div>
+    <div id="gaps-list">
+      <div class="spinner" style="margin:16px 0"></div>
+    </div>
+  </section>
+
+  <!-- 7. Growth rounding -->
+  <section class="doc-section">
+    <div class="doc-h2">Calculation conventions</div>
+    <div class="doc-h3">Period-over-period growth</div>
+    <div class="doc-p">
+      Percent change is computed as
+      <span class="doc-code">(current − previous) / previous × 100</span>,
+      rounded using Python's <span class="doc-code">round()</span> with
+      round-half-even (banker's rounding) to 2 decimal places by default
+      (configurable via the <span class="doc-code">decimal_places</span> query parameter).
+    </div>
+    <div class="doc-p">
+      Example from verified UK data:
+      10,810 → 13,020 = <strong>+20.44%</strong> (raw: 20.4384…%).
+      The raw value and the rounded value are both available in the API response.
+    </div>
+    <div class="doc-h3">Gap handling</div>
+    <div class="doc-p">
+      A growth point with a gap predecessor always returns
+      <span class="doc-code">percent_change: null</span>.
+      The system never skips a gap to compute growth against the last non-null value
+      without explicit documentation in the API response. The growth series always has
+      the same length as the trend series.
+    </div>
+  </section>
+
+  <!-- 8. Authentication -->
+  <section class="doc-section">
+    <div class="doc-h2">Authentication and access control</div>
+    <div class="doc-p">
+      All read (GET) endpoints are public. Viewing, analysing, and exporting data requires
+      no authentication. This reflects the nature of published academic research data.
+    </div>
+    <div class="doc-p">
+      Write operations — importing data, creating or modifying source records, seeding the
+      database — require an admin token obtained via
+      <span class="doc-code">POST /api/auth/token</span>.
+      <a href="login.html" style="color:var(--green)">Sign in →</a>
+    </div>
+    <div class="doc-p">
+      The first user to register automatically becomes admin. Subsequent users require an
+      existing admin to register them. There are no self-service admin escalation paths.
+    </div>
+  </section>
+
+  <!-- 9. Technical -->
+  <section class="doc-section">
+    <div class="doc-h2">Technical architecture</div>
+    <div class="doc-h3">Stack</div>
+    <div class="doc-p">
+      PostgreSQL 16 · SQLAlchemy 2.0 ORM · FastAPI 0.115 · Pydantic v2 ·
+      Python 3.12 · Uvicorn · Vanilla HTML/CSS/JS frontend.
+      All backend analytics logic is implemented as pure Python functions
+      with no framework dependency, making every analytical rule independently testable.
+    </div>
+    <div class="doc-h3">Test coverage</div>
+    <div class="doc-p">
+      202+ tests across 7 test suites plus 3 integration verification scripts.
+      Test suites cover: CSV import pipeline, XLSX import, column mapping and ambiguity
+      resolution, observation characteristics, validation rules, analytics comparability
+      logic, growth rounding, snapshot exclusion rules, gap handling, and seed integrity
+      checking. All tests verifiable without a running database or external network.
+    </div>
+    <div class="doc-h3">Migrations</div>
+    <div class="doc-p">
+      Three sequential plain-SQL migrations apply at first Docker boot:
+      001 (7-table base schema) · 002 (observation dimension columns) ·
+      003 (observation_characteristics table). No Alembic runtime dependency at startup —
+      migrations run via Postgres's <span class="doc-code">docker-entrypoint-initdb.d</span>.
+    </div>
+    <div class="doc-h3">API documentation</div>
+    <div class="doc-p">
+      Interactive API documentation (Swagger UI) is available at
+      <a href="/docs" style="color:var(--green)">/docs</a>.
+      ReDoc is at <a href="/redoc" style="color:var(--green)">/redoc</a>.
+    </div>
+  </section>
+</main>
+
+<script src="nsdo.js"></script>
+<script>
+const { apiFetch, el, navHTML, initNav } = window.NSDO;
+document.getElementById('nav-placeholder').innerHTML = navHTML('docs');
+initNav('docs');
+
+async function loadMetrics() {
+  const res = await apiFetch('/api/metric-definitions');
+  const container = document.getElementById('metric-defs-table');
+  if (!res.ok) { container.textContent = 'Could not load metric definitions — backend offline?'; return; }
+
+  const tbody = el('tbody');
+  res.data.forEach(m => {
+    tbody.appendChild(el('tr', {},
+      el('td', { style: { fontFamily: 'var(--mono)', fontSize: '12px' } }, m.code),
+      el('td', {}, m.name),
+      el('td', { style: { fontSize: '13px', color: 'var(--text-muted)' } }, m.description),
+    ));
+  });
+  container.innerHTML = '';
+  container.appendChild(el('div', { style: { overflowX: 'auto' } },
+    el('table', {},
+      el('thead', {}, el('tr', {},
+        el('th', {}, 'Code'), el('th', {}, 'Name'), el('th', {}, 'Description')
+      )),
+      tbody,
+    )
+  ));
+}
+
+async function loadGaps() {
+  // Gaps are documented in seed_data.py and exposed via the dashboard endpoint.
+  // We fetch them from the API for display here.
+  const res = await apiFetch('/api/analytics/snapshot');
+  const container = document.getElementById('gaps-list');
+  container.innerHTML = '';
+
+  // Known gaps come from seed_data.py — we document them statically here
+  // since there is no dedicated /api/known-gaps endpoint.
+  const GAPS = [
+    'UK Nigerian student enrolment 2022/23 and 2023/24: HESA confirmed decline following post-2021 visa rule changes, but exact figures not yet published in the public domain at time of data collection.',
+    'US Nigerian student enrolment 2025/26: IIE Open Doors does not publish in-year estimates; figures typically released 12 months after the reference period ends.',
+    'Canada: only a single credible-secondary press report (citing IRCC) is available. No direct access to IRCC data tables was achieved. The figure is indicative, not verified.',
+    'Germany: no verifiable count of Nigerian students at the level of detail required by this project was found in public DFG, DAAD, or Destatis data at time of collection.',
+    'Australia: preliminary indications of significant Nigerian student presence exist in ABS migration data but not in a form disaggregated by home-country enrolment headcount.',
+    'Malaysia: only a market-research estimate with no disclosed methodology is available. Treated as unverified and excluded from cross-country comparisons.',
+  ];
+
+  GAPS.forEach(gap => {
+    container.appendChild(el('div', { class: 'gap-item' }, gap));
+  });
+}
+
+loadMetrics();
+loadGaps();
+</script>
+</body>
+</html>

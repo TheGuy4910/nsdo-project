@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NSDO — Datasets</title>
+  <link rel="stylesheet" href="nsdo.css">
+  <style>
+    .ds-title    { font-weight:500;color:var(--navy);max-width:320px; }
+    .ds-limit    { font-size:12px;color:var(--text-muted);font-style:italic;margin-top:2px;max-width:320px;
+                   white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+    .ds-actions  { display:flex;gap:6px; }
+
+    /* Detail modal */
+    .modal-overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;
+      display:flex;align-items:center;justify-content:center;padding:24px;
+    }
+    .modal-overlay.hidden{ display:none; }
+    .modal{
+      background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);
+      max-width:680px;width:100%;max-height:90vh;overflow-y:auto;
+    }
+    .modal-header{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:20px 24px;border-bottom:1px solid var(--rule);position:sticky;top:0;
+      background:var(--surface);z-index:1;
+    }
+    .modal-title  { font-size:16px;font-weight:700;color:var(--navy); }
+    .modal-close  { background:none;border:none;font-size:20px;color:var(--stone);cursor:pointer;padding:4px; }
+    .modal-body   { padding:24px; }
+    .detail-row   { display:flex;gap:12px;margin-bottom:14px;align-items:flex-start; }
+    .detail-label { font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.08em;
+                    text-transform:uppercase;color:var(--stone);min-width:140px;flex-shrink:0;padding-top:2px; }
+    .detail-value { font-size:13.5px;color:var(--text); }
+    .detail-url   { word-break:break-all;color:var(--green);font-size:12.5px; }
+    .limitations-box{
+      background:var(--amber-light);border:1px solid #E6A835;border-radius:var(--radius);
+      padding:12px 14px;margin-top:16px;font-size:13px;color:#7A4C05;line-height:1.6;
+    }
+    .limitations-label{
+      font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;
+      color:var(--amber);font-weight:600;margin-bottom:6px;
+    }
+
+    /* Characteristics panel (Phase 6) */
+    .char-section { margin-top:20px; }
+    .char-section-label {
+      font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;
+      color:var(--stone);font-weight:600;margin-bottom:8px;
+    }
+    .char-observation {
+      background:var(--bg);border:1px solid var(--rule);border-radius:var(--radius);
+      padding:10px 12px;margin-bottom:8px;
+    }
+    .char-obs-header {
+      display:flex;align-items:center;justify-content:space-between;
+      font-family:var(--mono);font-size:11.5px;color:var(--slate);margin-bottom:6px;
+    }
+    .char-obs-value { font-weight:600;color:var(--navy); }
+    .char-dims { display:flex;flex-wrap:wrap;gap:6px; }
+    .char-dim {
+      font-family:var(--mono);font-size:11px;padding:2px 8px;
+      background:var(--navy-faint);border:1px solid var(--rule);
+      border-radius:3px;color:var(--navy);
+    }
+    .char-bare-total {
+      font-size:12px;color:var(--stone);font-style:italic;margin-top:4px;
+    }
+
+    /* Export button row */
+    .modal-footer {
+      padding:16px 24px;border-top:1px solid var(--rule);
+      display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+      background:var(--surface);
+    }
+  </style>
+</head>
+<body class="site-wrap">
+<div id="nav-placeholder"></div>
+
+<main class="page-content">
+  <header class="page-header">
+    <p class="page-eyebrow">Data Inventory</p>
+    <h1 class="page-title">Datasets</h1>
+    <p class="page-subtitle">
+      Every registered release — each linked to a named source, a metric definition, and a stated limitation.
+      Datasets are never overwritten; revisions create a new row.
+    </p>
+  </header>
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <div class="form-group">
+      <label class="form-label">Country</label>
+      <input type="text" id="f-country" class="form-input" placeholder="e.g. United Kingdom">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Period</label>
+      <input type="text" id="f-period" class="form-input" placeholder="e.g. 2021/22">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Status</label>
+      <select id="f-status" class="form-select">
+        <option value="">All</option>
+        <option>draft</option><option>validated</option>
+        <option>verified</option><option>deprecated</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Source</label>
+      <select id="f-source" class="form-select">
+        <option value="">All sources</option>
+      </select>
+    </div>
+    <div class="form-group" style="flex:none">
+      <label class="form-label">&nbsp;</label>
+      <button class="btn btn-outline" id="btn-clear">Clear filters</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title" id="result-count">Datasets</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span id="page-label" style="font-size:12px;color:var(--stone)"></span>
+        <button class="btn btn-outline btn-sm" id="btn-prev" onclick="changePage(-1)" disabled>← Prev</button>
+        <button class="btn btn-outline btn-sm" id="btn-next" onclick="changePage(1)" disabled>Next →</button>
+        <a class="btn btn-primary btn-sm" href="import.html">+ Import dataset</a>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Title / Limitations</th>
+            <th>Country</th>
+            <th>Period</th>
+            <th>Source</th>
+            <th>Tier</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="datasets-tbody">
+          <tr><td colspan="7" style="text-align:center;padding:32px">
+            <div class="spinner" style="margin:0 auto"></div>
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<!-- Detail modal -->
+<div class="modal-overlay hidden" id="detail-modal" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">Dataset detail</span>
+      <button class="modal-close" id="modal-close-btn" aria-label="Close">×</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer"></div>
+  </div>
+</div>
+
+<script src="nsdo.js"></script>
+<script>
+const { apiFetch, fmt, el, tierBadge, statusBadge, renderLoading, renderEmpty, renderError, navHTML, initNav, auth } = window.NSDO;
+
+document.getElementById('nav-placeholder').innerHTML = navHTML('datasets');
+initNav('datasets');
+
+let allSources = [];
+const 25 = 25;
+let currentSkip = 0;
+let lastTotal = 0;  // estimated from last response size
+
+async function loadPage(skip = 0) { try {
+  currentSkip = skip;
+  const tbody = document.getElementById('datasets-tbody');
+  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px"><div class="spinner" style="margin:0 auto"></div></td></tr>`;
+
+  const country = document.getElementById('f-country').value.trim();
+  const period  = document.getElementById('f-period').value.trim();
+  const status  = document.getElementById('f-status').value;
+  const srcId   = document.getElementById('f-source').value;
+
+  let url = `/api/datasets?limit=25&skip='+skip+'`;
+  if (country) url += `&destination_country=${encodeURIComponent(country)}`;
+  if (period)  url += `&reference_period=${encodeURIComponent(period)}`;
+  if (status)  url += `&status=${encodeURIComponent(status)}`;
+  if (srcId)   url += `&source_id=${encodeURIComponent(srcId)}`;
+
+  const dsRes = await apiFetch(url);
+  const srcRes = await Promise.resolve({ok:true,data:[]});
+  if (!dsRes.ok) { renderError(tbody, 'Could not load datasets — backend offline?'); return; }
+
+  const datasets = dsRes.data;
+  if (!allSources.length && srcRes.ok) {
+    allSources = srcRes.data;
+    const srcSel = document.getElementById('f-source');
+    if (srcSel.children.length === 1) {   // only the "All" option
+      allSources.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id; opt.textContent = s.short_code;
+        srcSel.appendChild(opt);
+      });
+    }
+  }
+
+  renderTable(datasets, skip);
+}
+
+function renderTable(datasets, skip) {
+  const tbody = document.getElementById('datasets-tbody');
+  tbody.innerHTML = '';
+
+  const from = skip + 1;
+  const to   = skip + datasets.length;
+  const hasMore = datasets.length === 25;
+
+  // Update pagination controls
+  document.getElementById('btn-prev').disabled = (skip === 0);
+  document.getElementById('btn-next').disabled = !hasMore;
+  document.getElementById('page-label').textContent =
+    datasets.length === 0 ? '' : `Showing ${from}–${to}`;
+  document.getElementById('result-count').textContent =
+    datasets.length === 0
+      ? 'No datasets'
+      : `${datasets.length} dataset${datasets.length !== 1 ? 's' : ''} (page ${Math.floor(skip / 25) + 1})`;
+
+  if (datasets.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--stone)">
+      No datasets match — <a href="import.html" style="color:var(--green)">import one</a> or clear filters.
+    </td></tr>`;
+    return;
+  }
+
+  datasets.forEach(d => {
+    const tr = el('tr', {},
+      el('td', {},
+        el('div', { class: 'ds-title' }, d.title),
+        el('div', { class: 'ds-limit' }, d.limitations),
+      ),
+      el('td', { class: 'td-mono', style:{ fontSize:'12.5px' } }, d.destination_country),
+      el('td', { class: 'td-mono' }, d.reference_period),
+      el('td', {},
+        el('div', { style:{ fontWeight:'500',fontSize:'13px' } }, d.source.short_code),
+      ),
+      el('td', {}, tierBadge(d.source.reliability_tier)),
+      el('td', {}, statusBadge(d.status)),
+      el('td', {},
+        el('button', {
+          class: 'btn btn-outline btn-sm',
+          onclick: () => openDetail(d),
+        }, 'Details'),
+      ),
+    );
+    tbody.appendChild(tr);
+  });
+}
+
+function changePage(direction) {
+  const newSkip = currentSkip + (direction * 25);
+  if (newSkip < 0) return;
+  loadPage(newSkip);
+}
+
+function applyFilters() {
+  loadPage(0);  // reset to first page on filter change
+}
+
+['f-country','f-period','f-status','f-source'].forEach(id => {
+  document.getElementById(id).addEventListener('input',  applyFilters);
+  document.getElementById(id).addEventListener('change', applyFilters);
+});
+document.getElementById('btn-clear').addEventListener('click', () => {
+  ['f-country','f-period','f-status','f-source'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  loadPage(0);
+});
+
+function load() { loadPage(0); }
+
+// --- Detail modal ---
+async function openDetail(d) {
+  document.getElementById('modal-title').textContent = d.title;
+  const body   = document.getElementById('modal-body');
+  const footer = document.getElementById('modal-footer');
+  body.innerHTML = '';
+  footer.innerHTML = '';
+
+  const row = (label, value) => el('div', { class: 'detail-row' },
+    el('span', { class: 'detail-label' }, label),
+    el('span', { class: 'detail-value' }, value ?? '—'),
+  );
+
+  body.appendChild(row('ID', String(d.id)));
+  body.appendChild(row('Destination', d.destination_country));
+  body.appendChild(row('Reference period', d.reference_period));
+  body.appendChild(row('Status', '')); // badge appended below
+  body.lastChild.querySelector('.detail-value').appendChild(statusBadge(d.status));
+  body.appendChild(row('Source', `${d.source.name} (${d.source.short_code})`));
+  body.appendChild(row('Reliability', '')); // badge appended below
+  body.lastChild.querySelector('.detail-value').appendChild(tierBadge(d.source.reliability_tier));
+  body.appendChild(row('Metric', `${d.metric_definition.name} — ${d.metric_definition.code}`));
+  body.appendChild(row('Metric description', d.metric_definition.description));
+  body.appendChild(row('Imported', fmt.datetime(d.imported_at)));
+  if (d.verified_at) body.appendChild(row('Verified', fmt.datetime(d.verified_at) + (d.verified_by ? ` by ${d.verified_by}` : '')));
+  if (d.publication_date) body.appendChild(row('Published', fmt.date(d.publication_date)));
+  if (d.original_url) {
+    body.appendChild(el('div', { class: 'detail-row' },
+      el('span', { class: 'detail-label' }, 'Original URL'),
+      el('a', { class: 'detail-value detail-url', href: d.original_url, target: '_blank', rel: 'noopener' }, d.original_url),
+    ));
+  }
+  if (d.original_filename) body.appendChild(row('File', d.original_filename));
+  if (d.superseded_by_id) body.appendChild(row('Superseded by', `Dataset #${d.superseded_by_id}`));
+
+  body.appendChild(el('div', { class: 'limitations-box' },
+    el('div', { class: 'limitations-label' }, 'Stated limitations'),
+    el('p', {}, d.limitations),
+  ));
+
+  // --- Observations and characteristics panel ---
+  const charSection = el('div', { class: 'char-section' },
+    el('div', { class: 'char-section-label' }, 'Observations & characteristics'),
+  );
+  const charContent = el('div');
+  charSection.appendChild(charContent);
+  body.appendChild(charSection);
+
+  // Lazy-load observations for this dataset
+  const obsRes = await apiFetch(`/api/observations?dataset_id=${d.id}&limit=50`);
+  if (!obsRes.ok || !obsRes.data?.length) {
+    charContent.appendChild(el('div', { class: 'char-bare-total' },
+      obsRes.ok ? 'No observations recorded for this dataset.' : 'Could not load observations.'
+    ));
+  } else {
+    const observations = obsRes.data;
+    for (const obs of observations.slice(0, 20)) {
+      const charRes = await apiFetch(`/api/observations/${obs.id}/characteristics`);
+      const chars   = charRes.ok ? charRes.data : [];
+
+      const obsCard = el('div', { class: 'char-observation' },
+        el('div', { class: 'char-obs-header' },
+          el('span', {}, `Observation #${obs.id} · ${obs.destination_country}`),
+          el('span', { class: 'char-obs-value' }, fmt.number(obs.value)),
+        ),
+      );
+
+      if (chars.length === 0) {
+        obsCard.appendChild(el('div', { class: 'char-bare-total' },
+          'Bare total — no sub-dimensions recorded. This figure represents the entire population for this dataset.'
+        ));
+      } else {
+        const dimRow = el('div', { class: 'char-dims' });
+        chars.forEach(c => {
+          dimRow.appendChild(el('span', { class: 'char-dim', title: `source: ${c.value_source}` },
+            `${c.dimension}: ${c.value}`
+          ));
+        });
+        obsCard.appendChild(dimRow);
+      }
+      charContent.appendChild(obsCard);
+    }
+    if (observations.length > 20) {
+      charContent.appendChild(el('div', { class: 'char-bare-total' },
+        `… and ${observations.length - 20} more observations. Use the export to see all.`
+      ));
+    }
+  }
+
+  document.getElementById('detail-modal').classList.remove('hidden');
+  document.getElementById('modal-close-btn').focus();
+
+  // --- Footer: export button + auth-aware sign-in prompt ---
+  const exportUrl = `/api/datasets/${d.id}/export.csv`;
+  const exportBtn = el('a', {
+    class: 'btn btn-outline btn-sm',
+    href: exportUrl,
+    download: `nsdo-dataset-${d.id}.csv`,
+  }, '⬇ Export CSV');
+  footer.appendChild(exportBtn);
+
+  const docsLink = el('a', { class: 'btn btn-outline btn-sm', href: 'docs.html' }, 'Methodology →');
+  footer.appendChild(docsLink);
+
+  if (!auth.isSignedIn()) {
+    footer.appendChild(el('span', { style: { fontSize: '12px', color: 'var(--stone)' } },
+      'Sign in as admin to import or modify data. ',
+      (() => { const a = el('a', { href: 'login.html', style: { color: 'var(--green)' } }, 'Sign in →'); return a; })()
+    ));
+  }
+}
+
+document.getElementById('modal-close-btn').addEventListener('click', () => {
+  document.getElementById('detail-modal').classList.add('hidden');
+});
+document.getElementById('detail-modal').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('detail-modal').classList.add('hidden');
+});
+
+load();
+</script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NSDO — Sign in</title>
+  <link rel="stylesheet" href="nsdo.css">
+  <style>
+    .login-wrap {
+      min-height: 100vh; display: flex; align-items: center;
+      justify-content: center; background: var(--bg); padding: 24px;
+    }
+    .login-card {
+      width: 100%; max-width: 400px;
+      background: var(--surface); border: 1px solid var(--rule);
+      border-radius: var(--radius-lg); box-shadow: var(--shadow);
+      padding: 40px 36px;
+    }
+    .login-brand {
+      font-family: var(--mono); font-size: 11px; font-weight: 600;
+      letter-spacing: .15em; text-transform: uppercase;
+      color: var(--green); margin-bottom: 6px;
+    }
+    .login-title {
+      font-size: 22px; font-weight: 700; color: var(--navy);
+      margin-bottom: 4px;
+    }
+    .login-sub {
+      font-size: 13px; color: var(--stone); margin-bottom: 28px;
+    }
+    .login-footer {
+      margin-top: 20px; font-size: 12px; color: var(--stone);
+      text-align: center; line-height: 1.6;
+    }
+    .login-footer a { color: var(--green); }
+  </style>
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-brand">NSDO</div>
+    <div class="login-title">Sign in</div>
+    <div class="login-sub">Nigerian Student Diaspora Observatory</div>
+
+    <div id="login-error" class="hidden" style="margin-bottom:16px"></div>
+
+    <div class="form-group">
+      <label class="form-label" for="username">Username</label>
+      <input type="text" id="username" class="form-input" autocomplete="username"
+             placeholder="your username" autofocus>
+    </div>
+    <div class="form-group" style="margin-top:12px">
+      <label class="form-label" for="password">Password</label>
+      <input type="password" id="password" class="form-input"
+             autocomplete="current-password" placeholder="••••••••">
+    </div>
+
+    <div style="margin-top:20px;display:flex;gap:10px;align-items:center">
+      <button class="btn btn-primary" id="btn-signin" onclick="signIn()" style="flex:1">
+        Sign in
+      </button>
+      <div id="signin-spinner" class="hidden spinner" style="flex:none"></div>
+    </div>
+
+    <div class="login-footer">
+      <a href="index.html">← Back to dashboard</a>
+      &nbsp;·&nbsp;
+      Viewing data requires no sign-in.<br>
+      Sign in only required for import, seed, and write operations.
+    </div>
+  </div>
+</div>
+
+<script>
+  const API = '';   // same origin when served via Docker; empty = relative
+
+  async function signIn() {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const errDiv   = document.getElementById('login-error');
+    errDiv.innerHTML = ''; errDiv.classList.add('hidden');
+
+    if (!username || !password) {
+      showError('Username and password are required.');
+      return;
+    }
+
+    document.getElementById('btn-signin').disabled = true;
+    document.getElementById('signin-spinner').classList.remove('hidden');
+
+    const body = new URLSearchParams();
+    body.append('username', username);
+    body.append('password', password);
+
+    try {
+      const res = await fetch(`${API}/api/auth/token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString(),
+      });
+      const data = await res.json();
+      if (res.ok && data.access_token) {
+        sessionStorage.setItem('nsdo_token', data.access_token);
+        sessionStorage.setItem('nsdo_token_at', Date.now());
+        // Fetch role so auth.isAdmin() works in nav immediately
+        try {
+          const meRes = await fetch(`${API}/api/auth/me`, {
+            headers: { 'Authorization': `Bearer ${data.access_token}` }
+          });
+          if (meRes.ok) {
+            const me = await meRes.json();
+            sessionStorage.setItem('nsdo_role', me.role);
+          }
+        } catch (_) { /* role will be verified server-side anyway */ }
+        const next = new URLSearchParams(window.location.search).get('next') || 'index.html';
+        window.location.href = next;
+      } else {
+        showError(data.detail || 'Sign-in failed — check your credentials.');
+      }
+    } catch (err) {
+      showError('Network error — is the backend running?');
+    } finally {
+      document.getElementById('btn-signin').disabled = false;
+      document.getElementById('signin-spinner').classList.add('hidden');
+    }
+  }
+
+  function showError(msg) {
+    const d = document.getElementById('login-error');
+    d.innerHTML = `<div class="alert alert-error">${msg}</div>`;
+    d.classList.remove('hidden');
+  }
+
+  // Allow Enter key to submit
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') signIn();
+  });
+
+  // If already signed in, go straight to dashboard
+  if (sessionStorage.getItem('nsdo_token')) {
+    window.location.href = 'index.html';
+  }
+</script>
+</body>
+</html>
