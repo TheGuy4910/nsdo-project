@@ -210,6 +210,9 @@ async function loadPage(skip = 0) { try {
   }
 
   renderTable(datasets, skip);
+} catch (err) {
+    renderError(tbody, 'Could not load datasets — backend offline?');
+  }
 }
 
 function renderTable(datasets, skip) {
