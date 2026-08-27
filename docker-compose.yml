@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nsdo
+      POSTGRES_PASSWORD: nsdo_dev_password
+      POSTGRES_DB: nsdo
+    ports:
+      - "5432:5432"
+    volumes:
+      - nsdo_pgdata:/var/lib/postgresql/data
+      - ./backend/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nsdo"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg2://nsdo:nsdo_dev_password@db:5432/nsdo
+      # JWT_SECRET_KEY is read from the .env file (see .env.example).
+      # If absent, the app starts with a dev fallback and logs a WARNING.
+      # Never use the dev fallback in production.
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./frontend:/app/static
+
+volumes:
+  nsdo_pgdata:

@@ -1,0 +1,6 @@
+country,academic_year,degree_level,student_count
+United Kingdom,2021/22,MSc,500
+UK,2021/22,MSc,500
+United States,2022/23,PhD,-12
+Canada,not-a-year,Bachelors,300
+Narnia,2022/23,Bachelors,not-a-number

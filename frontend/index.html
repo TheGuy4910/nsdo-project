@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NSDO — Dashboard</title>
+  <link rel="stylesheet" href="nsdo.css">
+  <style>
+    .chart-wrap  { position: relative; height: 260px; padding: 8px 0 0; }
+    .chart-svg   { width: 100%; height: 100%; overflow: visible; }
+    .chart-legend{ display:flex;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;margin-top:10px; }
+    .chart-legend-item{ display:flex;align-items:center;gap:5px;color:var(--slate); }
+    .chart-legend-dot { width:8px;height:8px;border-radius:50%;flex-shrink:0; }
+    .chart-tooltip{
+      position:fixed;z-index:200;background:var(--navy);color:#fff;
+      padding:8px 12px;border-radius:var(--radius);font-family:var(--mono);font-size:12px;
+      line-height:1.6;pointer-events:none;white-space:nowrap;box-shadow:var(--shadow-lg);display:none;
+    }
+    .country-grid{ display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px; }
+    .country-card{
+      background:var(--surface);border:1px solid var(--rule);border-radius:var(--radius-lg);
+      padding:20px;box-shadow:var(--shadow-sm);transition:box-shadow var(--transition);
+      display:flex;flex-direction:column;gap:10px;
+    }
+    .country-card:hover{ box-shadow:var(--shadow); }
+    .country-card-header{ display:flex;align-items:center;justify-content:space-between; }
+    .country-name{ font-size:15px;font-weight:600;color:var(--navy); }
+    .country-value{ font-family:var(--mono);font-size:28px;font-weight:500;color:var(--navy); }
+    .country-meta{ font-size:12px;color:var(--text-muted);display:flex;flex-direction:column;gap:3px; }
+    .country-bar-wrap{ height:4px;background:var(--rule);border-radius:2px;overflow:hidden; }
+    .country-bar{ height:100%;border-radius:2px;background:var(--navy); }
+    .gaps-list{ list-style:none;display:flex;flex-direction:column;gap:8px; }
+    .gaps-list li{
+      display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--text-muted);
+      padding:8px 12px;background:var(--bg);border-radius:var(--radius-sm);
+    }
+    .gaps-list li::before{ content:'○';font-family:var(--mono);color:var(--stone);flex-shrink:0;font-size:10px;margin-top:3px; }
+    .src-name{ font-weight:500;color:var(--navy); }
+    .src-code{ font-family:var(--mono);font-size:11px;color:var(--stone);margin-top:2px; }
+  </style>
+</head>
+<body class="site-wrap">
+<div id="nav-placeholder"></div>
+<div class="chart-tooltip" id="tooltip"></div>
+
+<main class="page-content">
+  <header class="page-header">
+    <p class="page-eyebrow">Observatory</p>
+    <h1 class="page-title">Nigerian Students Abroad</h1>
+    <p class="page-subtitle">
+      Academic distribution of Nigerian students in foreign institutions —
+      every figure sourced, cited, and provenance-tracked.
+    </p>
+  </header>
+
+  <section class="section-gap">
+    <div class="stat-grid">
+      <div class="stat-tile stat-tile-accent">
+        <span class="stat-tile-label">Datasets loaded</span>
+        <span class="stat-tile-value" id="s-datasets">—</span>
+        <span class="stat-tile-sub">across all destinations</span>
+      </div>
+      <div class="stat-tile">
+        <span class="stat-tile-label">Sources registered</span>
+        <span class="stat-tile-value" id="s-sources">—</span>
+        <span class="stat-tile-sub">verified data origins</span>
+      </div>
+      <div class="stat-tile">
+        <span class="stat-tile-label">UK peak (2021/22)</span>
+        <span class="stat-tile-value">44,195</span>
+        <span class="stat-tile-sub" title="Higher Education Statistics Agency">HESA — official primary</span>
+      </div>
+      <div class="stat-tile">
+        <span class="stat-tile-label">US latest (2023/24)</span>
+        <span class="stat-tile-value">20,029</span>
+        <span class="stat-tile-sub" title="IIE Open Doors Report">Open Doors — official secondary</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-gap">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Enrollment Trend by Destination</span>
+        <a class="card-action" href="datasets.html">View all datasets →</a>
+      </div>
+      <div class="card-body">
+        <div class="chart-wrap">
+          <svg class="chart-svg" id="trend-chart" role="img" aria-label="Enrollment trend by destination"></svg>
+        </div>
+        <div class="chart-legend" id="chart-legend"></div>
+        <div id="dashboard-comparability-warn" class="hidden" style="margin-top:14px"></div>
+        <div class="provenance-note" style="margin-top:14px">
+          Shows datasets with comparable enrollment headcounts. Unverified sources and the
+          global aggregate are excluded from this chart. Use the <a href="analytics.html" style="color:var(--green)">Analytics page</a> for rigorous per-metric analysis.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-gap">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Latest Figure by Destination</span>
+        <span style="font-size:12px;color:var(--stone)">Most recent available period per country</span>
+      </div>
+      <div class="card-body">
+        <div class="country-grid" id="country-grid">
+          <div class="state-container"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="grid-2 section-gap">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Data Sources</span>
+        <a class="card-action" href="sources.html">Manage →</a>
+      </div>
+      <div class="card-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Source</th><th>Tier</th><th>Datasets</th></tr></thead>
+            <tbody id="sources-tbody">
+              <tr><td colspan="3" style="text-align:center;padding:24px"><div class="spinner" style="margin:0 auto"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Documented Data Gaps</span>
+        <span style="font-size:12px;color:var(--stone)">Not estimated — explicitly absent</span>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-info" style="margin-bottom:14px">
+          <strong>Methodological commitment:</strong> gaps are documented here, not filled with estimates.
+          Every number in this observatory has a cited source.
+        </div>
+        <ul class="gaps-list" id="gaps-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-warn section-gap">
+    <strong>Cross-metric comparability:</strong>&nbsp;
+    UK figures use the HESA enrolled headcount; US figures use the SEVIS-derived Open Doors methodology;
+    Canada is a press-cited figure with unconfirmed counting basis.
+    These methodologies are not directly comparable — see dataset limitations before combining.
+  </div>
+</main>
+
+<script src="nsdo.js"></script>
+<script>
+const { apiFetch, fmt, el, tierBadge, renderEmpty, renderError, navHTML, initNav } = window.NSDO;
+
+document.getElementById('nav-placeholder').innerHTML = navHTML('dashboard');
+initNav('dashboard');
+
+const KNOWN_GAPS = [
+  'UK Nigerian enrolment for 2022/23 and 2023/24 — qualitative decline documented (British Council, HESA commentary) but no reconciled aggregate headline number located.',
+  'Germany — cited as a rising destination in secondary sources; no verifiable enrolment count found. Excluded rather than estimated.',
+  'Field of study / discipline breakdown — not available at country-of-origin level for any destination in sources reviewed.',
+  'Institution-level breakdown — not available from any source reviewed at this stage.',
+  'Degree-level split (UG vs PG) for Nigerian students specifically — not located in aggregate form for UK or US.',
+  '2023 UNESCO share — "~5% of ~7.3M mobile students" is a global share, not a destination-specific headcount; kept separate.',
+];
+
+const gapsList = document.getElementById('gaps-list');
+KNOWN_GAPS.forEach(gap => gapsList.appendChild(el('li', {}, gap)));
+
+async function loadDashboard() {
+  const [dsRes, srcRes, obsRes] = await Promise.all([
+    apiFetch('/api/datasets'),
+    apiFetch('/api/sources'),
+    apiFetch('/api/observations?limit=2000'),
+  ]);
+
+  if (!dsRes.ok || !srcRes.ok) {
+    renderError(document.getElementById('country-grid'),
+      'Backend unavailable. Run docker compose up --build from the project root and refresh.');
+    document.getElementById('sources-tbody').innerHTML =
+      '<tr><td colspan="3" style="text-align:center;color:var(--stone);padding:16px">Backend offline</td></tr>';
+    return;
+  }
+
+  const datasets     = dsRes.data;
+  const sources      = srcRes.data;
+  const observations = obsRes.ok ? obsRes.data : [];
+
+  document.getElementById('s-datasets').textContent = datasets.length;
+  document.getElementById('s-sources').textContent  = sources.length;
+
+  // Country cards — only non-deprecated, non-global, non-unverified datasets
+  const eligible = datasets.filter(d =>
+    d.destination_country !== 'All destinations (global aggregate)' &&
+    d.source.reliability_tier !== 'unverified' &&
+    d.status !== 'deprecated'
+  );
+  const byCountry = {};
+  eligible.forEach(d => {
+    const c = d.destination_country;
+    (byCountry[c] = byCountry[c] || []).push(d);
+  });
+
+  // Build observation lookup: dataset_id -> [observations]
+  const obsByDataset = {};
+  observations.forEach(o => {
+    (obsByDataset[o.dataset_id] = obsByDataset[o.dataset_id] || []).push(o);
+  });
+
+  const grid = document.getElementById('country-grid');
+  grid.innerHTML = '';
+
+  const countries = Object.keys(byCountry).sort();
+  if (countries.length === 0) {
+    renderEmpty(grid, 'No datasets', 'Import data using the Import page.', null);
+    return;
+  }
+
+  // Compute max value across all countries for the bar chart proportion
+  const countryLatest = {};
+  countries.forEach(country => {
+    const sorted = [...byCountry[country]].sort((a,b) => b.reference_period.localeCompare(a.reference_period));
+    const latest = sorted[0];
+    const obs = (obsByDataset[latest.id] || []);
+    // Sum all observations for this dataset (aggregate across any sub-dimensions)
+    const total = obs.length > 0 ? obs.reduce((sum, o) => sum + o.value, 0) : null;
+    countryLatest[country] = { dataset: latest, value: total };
+  });
+  const allVals = Object.values(countryLatest).map(x => x.value).filter(v => v != null);
+  const maxVal = allVals.length ? Math.max(...allVals) : 1;
+
+  countries.forEach(country => {
+    const { dataset: latest, value: val } = countryLatest[country];
+    const pct = val != null ? Math.round((val / maxVal) * 100) : 0;
+
+    const metaChildren = [
+      el('span', {}, `Period: ${latest.reference_period}`),
+      el('span', {}, `Source: ${latest.source.short_code}`),
+    ];
+    if (latest.source.reliability_tier === 'credible_secondary') {
+      metaChildren.push(el('span', { style: { color:'var(--amber)', fontStyle:'italic' } },
+        'Credible secondary — verify before citing'));
+    }
+
+    grid.appendChild(el('div', { class: 'country-card' },
+      el('div', { class: 'country-card-header' },
+        el('span', { class: 'country-name' }, country),
+        tierBadge(latest.source.reliability_tier),
+      ),
+      val != null
+        ? el('div', { class: 'country-value' }, fmt.number(Math.round(val)))
+        : el('div', { class: 'country-value', style:{ fontSize:'16px',color:'var(--stone)' } }, 'No observations'),
+      el('div', { class: 'country-bar-wrap' },
+        el('div', { class: 'country-bar', style:{ width: pct + '%' } }),
+      ),
+      el('div', { class: 'country-meta' }, ...metaChildren),
+    ));
+  });
+
+  // Sources table
+  const dsPerSrc = {};
+  datasets.forEach(d => { dsPerSrc[d.source.id] = (dsPerSrc[d.source.id]||0)+1; });
+  const tbody = document.getElementById('sources-tbody');
+  tbody.innerHTML = '';
+  sources.forEach(s => {
+    tbody.appendChild(el('tr', {},
+      el('td', {},
+        el('div', { class: 'src-name' }, s.name),
+        el('div', { class: 'src-code' }, s.short_code),
+      ),
+      el('td', {}, tierBadge(s.reliability_tier)),
+      el('td', { class: 'td-mono td-right' }, String(dsPerSrc[s.id] ?? 0)),
+    ));
+  });
+
+  buildChart(datasets, observations);
+
+  // Decision A (Phase 5): mandatory amber comparability warning whenever the
+  // dashboard chart shows series with different metric_definition_ids.
+  const compatRes = await apiFetch('/api/analytics/dashboard-comparability');
+  if (compatRes.ok) {
+    const compat = compatRes.data.comparability;
+    if (!compat.all_comparable) {
+      const warnDiv = document.getElementById('dashboard-comparability-warn');
+      const VERDICT_LABELS = {
+        methodology_differs: 'Methodology differs across series',
+        incomparable: 'Series are not directly comparable',
+      };
+      const box = el('div', { class: 'alert alert-warn' },
+        el('strong', {}, (VERDICT_LABELS[compat.verdict] || 'Comparability notice') + ': '),
+        compat.reason,
+        el('span', {}, ' '),
+        (() => { const a = el('a', { href: 'analytics.html', style: { color: 'var(--amber)', fontWeight: '600' } }, 'Rigorous analysis →'); return a; })(),
+      );
+      warnDiv.appendChild(box);
+      warnDiv.classList.remove('hidden');
+    }
+  }
+}
+
+function buildChart(datasets, observations) {
+  const SERIES = {
+    'United Kingdom': { color: '#1B2B4B', label: 'United Kingdom (HESA)' },
+    'United States':  { color: '#1A7A4A', label: 'United States (Open Doors)' },
+    'Canada':         { color: '#D4820A', label: 'Canada (IRCC via press)' },
+  };
+
+  // Build chart points from real observation data returned by /api/observations.
+  // Group observations by (destination_country, academic_year or dataset.reference_period).
+  const obsByDataset = {};
+  observations.forEach(o => {
+    (obsByDataset[o.dataset_id] = obsByDataset[o.dataset_id] || []).push(o);
+  });
+
+  // For each series country, collect (period, total_value) from the API
+  const verified = {};
+  Object.keys(SERIES).forEach(country => {
+    const countryDatasets = datasets.filter(d =>
+      d.destination_country === country && d.status !== 'deprecated'
+    );
+    const periodTotals = {};
+    countryDatasets.forEach(ds => {
+      const obs = obsByDataset[ds.id] || [];
+      if (obs.length === 0) return;
+      const period = ds.reference_period;
+      const total  = obs.reduce((s, o) => s + o.value, 0);
+      // Keep only the highest-value entry per period (avoids double-counting if duplicate datasets)
+      if (!periodTotals[period] || total > periodTotals[period]) {
+        periodTotals[period] = total;
+      }
+    });
+    verified[country] = Object.entries(periodTotals)
+      .map(([period, value]) => ({ period, value: Math.round(value) }))
+      .sort((a, b) => a.period.localeCompare(b.period));
+  });
+
+  const allPeriods = [...new Set(Object.values(verified).flat().map(p => p.period))].sort();
+  const allValues  = Object.values(verified).flat().map(p => p.value);
+  if (allValues.length === 0) return;
+
+  const maxY = Math.ceil(Math.max(...allValues) * 1.1);
+  const W = 820, H = 240;
+  const PAD = { top:12, right:24, bottom:36, left:60 };
+  const pW = W - PAD.left - PAD.right, pH = H - PAD.top - PAD.bottom;
+
+  const svg  = document.getElementById('trend-chart');
+  const leg  = document.getElementById('chart-legend');
+  const tip  = document.getElementById('tooltip');
+  const ns   = 'http://www.w3.org/2000/svg';
+  svg.innerHTML = ''; leg.innerHTML = '';
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  const mk = (tag, attrs) => {
+    const e = document.createElementNS(ns, tag);
+    Object.entries(attrs).forEach(([k,v]) => e.setAttribute(k,v));
+    return e;
+  };
+  const xS = p => PAD.left + (allPeriods.indexOf(p) / Math.max(allPeriods.length-1,1)) * pW;
+  const yS = v => PAD.top + pH - (v / maxY) * pH;
+
+  // Grid
+  [0, .25, .5, .75, 1].forEach(f => {
+    const tick = Math.round(f * maxY), y = yS(tick);
+    svg.appendChild(mk('line', {x1:PAD.left,y1:y,x2:PAD.left+pW,y2:y,stroke:'var(--rule)','stroke-width':'1','stroke-dasharray':'3 3'}));
+    const t = mk('text', {x:PAD.left-6,y:y+4,'text-anchor':'end','font-size':'10','font-family':"'DM Mono',monospace",fill:'var(--stone)'});
+    t.textContent = tick >= 1000 ? (tick/1000).toFixed(0)+'k' : tick;
+    svg.appendChild(t);
+  });
+
+  // X labels
+  allPeriods.forEach(p => {
+    const t = mk('text', {x:xS(p),y:H-4,'text-anchor':'middle','font-size':'10','font-family':"'DM Mono',monospace",fill:'var(--stone)'});
+    t.textContent = p; svg.appendChild(t);
+  });
+
+  // Series
+  Object.entries(SERIES).forEach(([country, {color, label}]) => {
+    const pts = verified[country];
+    if (!pts?.length) return;
+    const coords = pts.map(p => ({x:xS(p.period),y:yS(p.value),...p}));
+
+    if (coords.length > 1) {
+      const areaStr = [`${coords[0].x},${yS(0)}`, ...coords.map(c=>`${c.x},${c.y}`), `${coords[coords.length-1].x},${yS(0)}`].join(' ');
+      svg.appendChild(mk('polygon', {points:areaStr,fill:color,opacity:'.09'}));
+      const d = coords.map((c,i)=>`${i===0?'M':'L'}${c.x},${c.y}`).join(' ');
+      svg.appendChild(mk('path', {d,stroke:color,fill:'none','stroke-width':'2.5','stroke-linejoin':'round','stroke-linecap':'round'}));
+    }
+
+    coords.forEach(c => {
+      const dot = mk('circle', {cx:c.x,cy:c.y,r:'4',fill:color,style:'cursor:pointer'});
+      dot.addEventListener('mouseenter', e => {
+        tip.style.display='block';
+        tip.innerHTML=`<strong>${country}</strong><br>${c.period}: ${fmt.number(c.value)} students`;
+        moveTip(e);
+      });
+      dot.addEventListener('mousemove', moveTip);
+      dot.addEventListener('mouseleave', () => { tip.style.display='none'; });
+      svg.appendChild(dot);
+    });
+
+    leg.appendChild(el('span', {class:'chart-legend-item'},
+      el('span', {class:'chart-legend-dot',style:{background:color}}), label));
+  });
+}
+
+function moveTip(e) {
+  const t = document.getElementById('tooltip');
+  t.style.left = (e.clientX+14)+'px'; t.style.top = (e.clientY-36)+'px';
+}
+
+loadDashboard();
+</script>
+</body>
+</html>

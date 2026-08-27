@@ -1,0 +1,80 @@
+# NSDO Phase 5 Checkpoint — SHA-256 File Manifest
+# Generated: 2026-08-25
+# Algorithm: SHA-256
+# Format: <hash>  <relative-path>
+# Files: 60
+#
+# Verification (run from nsdo-project/):
+#   python3 -c "
+#     import hashlib, sys
+#     ok=miss=changed=0
+#     for line in open(chr(39)MANIFEST.sha256chr(39)):
+#       if line.startswith(chr(39)#chr(39)) or not line.strip(): continue
+#       digest, path = line.strip().split(chr(39)  chr(39), 1)
+#       try:
+#         actual = hashlib.sha256(open(path,chr(39)rbchr(39)).read()).hexdigest()
+#         if actual==digest: ok+=1
+#         else: changed+=1; print(f chr(39)CHANGED {path}chr(39))
+#       except FileNotFoundError: miss+=1; print(f chr(39)MISSING {path}chr(39))
+#     print(f chr(39){ok} ok, {changed} changed, {miss} missingchr(39))"
+
+81e685044eb5abb1152d51b3c313c08a25069fd59a25009fa8f4bc068007d5b8  CHECKPOINT.md
+5089c031275206cd9aecce4e2487f79dcf83a6f384552958746c354e2bfc08a6  backend/Dockerfile
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  backend/app/__init__.py
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  backend/app/api/__init__.py
+87bcd1601b42900e902412c26bcd5401f0edb89ce164773a385960acbd5a46c4  backend/app/api/admin.py
+ec42dfb02a9295e019bae58b17741fc32b2e3d49405274eb8ee031d1e1d09b7e  backend/app/api/analytics.py
+5514db5ed6a7ce6173a4d6802f110df41c130f753dbc4e071730b162466daef4  backend/app/api/datasets.py
+306ca81fb6312e15a46736969705f4d41a11601813dc7812e3c136316b23f464  backend/app/api/import_csv.py
+b3f5ce13903cd7b47c3253de61de5b4ee483ac77e6d0cfa03977016ad55c502a  backend/app/api/import_xlsx.py
+bffa6983791547805f7bcf3fd9073d6fb986e56b0f014d5a934a642d1fb72632  backend/app/api/metric_definitions.py
+4193fbd491a4e2e09ced34301559dedd6a9d07aa65a5083b96b3729bfc37227f  backend/app/api/observations.py
+614b586bba1920c15376e08a9d47894f60a62ebde7fb7169dabe89caa8f7b344  backend/app/api/sources.py
+fe1e23687f989151047af025b8c095766ba74b5be799fb5155f78fc116df936d  backend/app/crud.py
+9e8a674f4c91374eb154f9527aca626c143fee87f3b9d7e927b8e10213336c34  backend/app/database.py
+8e64591fea280313da2933523659eaa97bfb092ceb88d4d893fd00517dcc123b  backend/app/main.py
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  backend/app/models/__init__.py
+3912ceb01eb12f792059ed4db3b6de90168d245826b6b0b83b0f192cce3a4a7f  backend/app/models/models.py
+d431652f4f662db039f5333fd88ea89635a57765a43f02bdad659929b65ccf84  backend/app/schemas.py
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  backend/app/services/__init__.py
+60d1dcd2267ee6117e327285a668705d06aa6766ee4212310fae051cd4e8c65f  backend/app/services/analytics.py
+6d551a83ca68a503eeb6af72aa0e0d4858f80a134dfffa4018866d1a33d898a8  backend/app/services/characteristics.py
+5c5c2d8edaf872c2f0c93d58270bfaf57b9296ef4b98f6b5cf3bae4fc2b7cdfc  backend/app/services/csv_import.py
+f60f28cb33152ebc3957cfa003f5cb44d1f277b429364e83fb6807fae815a60e  backend/app/services/csv_import_commit.py
+24a5f782c816433c1572e0f348d5d22926d9484937b6250670b92a88e575c96e  backend/app/services/seed_runtime.py
+53685549da77ac3a408914b94204f7be66710d490d1f5a98fe81d4db3ac2aa26  backend/app/services/validation.py
+3e4217be39223269c8054f6ebdc4a929ba5a03548c4dc1583ac3006908b27f74  backend/app/services/xlsx_import.py
+45c550745c9f077f7793d1ed5b5fb2dfe1b07f442fb08a1ec772d951eec500c6  backend/migrations/001_init.sql
+2218a8bd2a8bad090f238fd3ea8973dd1cad93e257a23f90cca2494d990c581a  backend/migrations/002_add_observation_dimensions.sql
+d6f2df51bcfdcbf2edae3ffc1a6e2fd08d78ed11af00d1ab06c11044f505c117  backend/migrations/003_add_observation_characteristics.sql
+8f03c65917daca093250fcb173a167dfe4950d0addea95aca189285cbe53bdc7  backend/requirements.txt
+7662e586cdeaa0e359ecc37de8c4f70970fa8ed95a22ace7ba26349a7fb76f45  backend/seed/seed_data.py
+ea4097034f14cee1d8119cbea7c384fb56d7fc3dd261aeb57d54aca35dfa2b74  backend/seed/verify_local.py
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  backend/tests/__init__.py
+2deaa6d150ffa8cb76e81840de612cc3ef0c99664aa787a0b0edf3f9e9262401  backend/tests/fixtures/README.md
+b65e80b6b7aa57570e3cbfac9880fb92435c8b451025806b66a8df4e0fd270d9  backend/tests/fixtures/SYNTHETIC_DO_NOT_TREAT_AS_REAL.csv
+b2a7c1c85836d174cccbc8e5784892f50fa5019ae9a646c1a13dbba1c57a165f  backend/tests/fixtures/external_dfe_he_students/SOURCE.md
+efca7867c1889e1a400eb251e2e9d8e23b316da51b5c58294c31af2dee732c5d  backend/tests/fixtures/external_dfe_he_students/source_extract.csv
+0bb6d9cea3f99729574c2058def27636a068e851952df62bf4732dbd39a75238  backend/tests/fixtures/external_xlsx_dfe_widening_participation/SOURCE.md
+ce1e880db4f15f92bfd376112a04df2cfa04ef008393c1c6f4041bb87234aff2  backend/tests/fixtures/external_xlsx_dfe_widening_participation/generate_fixture.py
+dfc6a31969c777adf3decdeea4c16b81f2f67810f4a1446f683e7ade108bb411  backend/tests/fixtures/external_xlsx_dfe_widening_participation/workbook_source.xlsx
+b85c328798117fefd327bc5a5b7cc40eeece7176b89c7b72f653c96d6a2b9182  backend/tests/fixtures/hesa_uk_real_figures.csv
+59070b28afc6bcb7a878bf36afcc08fc1740ac3fbb391f517051399c066523c0  backend/tests/test_analytics.py
+d35575df4ff0101c8bff3f60a4fc89bdd7cb0edfa7f7826de24b07dcc5af34e4  backend/tests/test_characteristics.py
+75b8b8552e29c4a056cf49978f72a5710f1f00193f5ed393aec171decfb2d9d1  backend/tests/test_csv_import.py
+192975369a84ef5dbde38927f6c2aa144d9e96c8ca315005b926c71dd7d1b771  backend/tests/test_mapping_ambiguity.py
+73a918edc1500692c096b023ecb35b111a42c44418439ff3f45010df9c93bb2b  backend/tests/test_validation_logic.py
+8f1c367c57a2aa3ed8ac776d3d07ed8063d1b82b2f7590980d0931740b9052f3  backend/tests/test_xlsx_import.py
+3e1e65ef2d483fdf92fd3209e1e25434313afee129a4d903ddd4144b978678ee  backend/tests/verify_phase2_crud_behavior.py
+7bc9d25fd3e0f3202066d6191da6ef222e2bf8d11f8ed5590d01c2bc275dc0a5  backend/tests/verify_phase3a_commit_behavior.py
+9e3ec0bdfe0a97a3ec4afe312c3a34f616cc79dae569633559aef323f0259369  docker-compose.yml
+c855b8b8a1a408087e7addfb196cf8f3e62f84db90df752da33c5623aef27b2e  docs/DOCKER_VERIFY.sh
+fb0aba5b737342e63dd5e2386b76afbc2dcacb08e44d6ce5b6c845fede93251c  docs/PHASE_1_NOTES.md
+d831dc59bac8648192cd0072b9a66b7b64acc3f1a661cb6b5e8b6cdff460c25c  docs/PHASE_2_NOTES.md
+11e7a192c57ad663f14c9994ceb5a6f425a99c0cb281254ff14d389f1206f4d1  frontend/analytics.html
+e81068c191893752212450f1a02500e5fd8c3e5d0ba0d0efc969f5438ea987f8  frontend/datasets.html
+2b7e12d616c41a23e06c866774d33bd9a319f1230928e6c1d0a4ca29d3332736  frontend/import.html
+ea16d37099931c0b513b533f20f23f2523e5da40876cd4e4338b1818e14a9e09  frontend/index.html
+b6d2bbccd852e655436fab38940cc226d4a492cb6a916612ccf9b1f116b92609  frontend/nsdo.css
+1a245b2e380a36313a5160c1ae7a67bdc458c2b874e424ecd9e2b27cbbbfdc1a  frontend/nsdo.js
+870fe26fa7637953599a9e64f356e00f8e9762b742798d9409cbc8dff0ee996f  frontend/sources.html
