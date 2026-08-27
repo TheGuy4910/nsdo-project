@@ -38,7 +38,7 @@ const auth = {
 // API client — thin fetch wrapper, always returns {ok, data, error, status}
 // Automatically sends Bearer token if present in sessionStorage.
 // ---------------------------------------------------------------------------
-async function apiFetch(path, options = {}) {
+async function _apiFetch(path, options = {}) {
   try {
     const res = await fetch(`${API}${path}`, {
       headers: { 'Accept': 'application/json', ...auth.header(), ...options.headers },
@@ -238,5 +238,5 @@ function adminIcon(){ return `<svg viewBox="0 0 16 16" fill="none" stroke="curre
 // ---------------------------------------------------------------------------
 // Export
 // ---------------------------------------------------------------------------
-window.NSDO = { apiFetch, apiFormData, fmt, el, tierBadge, statusBadge,
+window.NSDO = { apiFetch: _apiFetch, apiFormData, fmt, el, tierBadge, statusBadge,
   countryChip, renderLoading, renderEmpty, renderError, initNav, navHTML, auth };
