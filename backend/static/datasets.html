@@ -186,7 +186,7 @@ async function loadPage(skip = 0) { try {
   const status  = document.getElementById('f-status').value;
   const srcId   = document.getElementById('f-source').value;
 
-  let url = `/api/datasets?limit=25&skip='+skip+'`;
+  let url = `/api/datasets?limit=${PAGE_SIZE}&skip=${skip}`;
   if (country) url += `&destination_country=${encodeURIComponent(country)}`;
   if (period)  url += `&reference_period=${encodeURIComponent(period)}`;
   if (status)  url += `&status=${encodeURIComponent(status)}`;
