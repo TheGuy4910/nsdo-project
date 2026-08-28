@@ -27,7 +27,7 @@ from typing import Optional
 
 from app.database import get_db
 from app import crud, schemas
-from app.models import User
+from app.models.models import User
 from app.services.auth import (
     hash_password,
     verify_password,
