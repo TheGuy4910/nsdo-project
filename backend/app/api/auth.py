@@ -165,10 +165,10 @@ def register(
         raise HTTPException(status_code=409, detail=f"Username '{payload.username}' is already taken.")
 
     # Validate password
-    if not payload.password or len(payload.password) < 8:
-        raise HTTPException(status_code=400, detail="Password must be at least 8 characters.")
+if not payload.password or len(payload.password) < 8:
+    raise HTTPException(status_code=400, detail="Password must be at least 8 characters.")
 
-   # Validate email
+# Validate email
 if not payload.email or not payload.email.strip():
     raise HTTPException(status_code=400, detail="Email is required.")
 if "@" not in payload.email or "." not in payload.email.split("@")[-1]:
@@ -179,8 +179,6 @@ if db.query(User).filter(User.email == payload.email.strip()).first():
 role = "admin" if is_bootstrap else "viewer"
 hashed = hash_password(payload.password)
 return crud.create_user(db, payload.username.strip(), hashed, role, email=payload.email.strip())
-
-
 # ---------------------------------------------------------------------------
 # GET /api/auth/me
 # ---------------------------------------------------------------------------
