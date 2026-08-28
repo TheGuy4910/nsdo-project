@@ -156,20 +156,6 @@ def register(
     user_count = crud.count_users(db)
     is_bootstrap = (user_count == 0)
 
-    if not is_bootstrap:
-        # Require an authenticated admin
-        if current_user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Authentication required to register new users.",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        if current_user.role != "admin":
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only admins can register new users.",
-            )
-
     # Validate username
     if not payload.username or not payload.username.strip():
         raise HTTPException(status_code=400, detail="Username cannot be empty.")
