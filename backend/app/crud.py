@@ -185,9 +185,8 @@ def count_users(db: Session) -> int:
     return db.query(User).count()
 
 
-def create_user(db: Session, username: str, password_hash: str, role: str) -> User:
-    user = User(username=username, password_hash=password_hash, role=role)
-    db.add(user)
+def create_user(db: Session, username: str, password_hash: str, role: str, email: str | None = None) -> User:
+    user = User(username=username, password_hash=password_hash, role=role, email=email)    db.add(user)
     db.commit()
     db.refresh(user)
     return user

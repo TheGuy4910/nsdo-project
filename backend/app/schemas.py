@@ -215,14 +215,15 @@ class CsvImportCommitRequest(BaseModel):
 class UserCreate(BaseModel):
     username: str
     password: str
+    email: str
 
 
 class UserRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     username: str
+    email: Optional[str] = None
     role: str
-
 
 class Token(BaseModel):
     access_token: str

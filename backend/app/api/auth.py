@@ -27,13 +27,14 @@ from typing import Optional
 
 from app.database import get_db
 from app import crud, schemas
+from app.models import User
 from app.services.auth import (
     hash_password,
     verify_password,
     create_access_token,
     decode_access_token,
+    ...
 )
-
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 # Declared here; imported by main.py to pass to FastAPI() so Swagger picks it up.
@@ -168,9 +169,17 @@ def register(
     if not payload.password or len(payload.password) < 8:
         raise HTTPException(status_code=400, detail="Password must be at least 8 characters.")
 
-    role = "admin" if is_bootstrap else "viewer"
-    hashed = hash_password(payload.password)
-    return crud.create_user(db, payload.username.strip(), hashed, role)
+   # Validate email
+if not payload.email or not payload.email.strip():
+    raise HTTPException(status_code=400, detail="Email is required.")
+if "@" not in payload.email or "." not in payload.email.split("@")[-1]:
+    raise HTTPException(status_code=400, detail="Please provide a valid email address.")
+if db.query(User).filter(User.email == payload.email.strip()).first():
+    raise HTTPException(status_code=409, detail=f"Email '{payload.email}' is already registered.")
+
+role = "admin" if is_bootstrap else "viewer"
+hashed = hash_password(payload.password)
+return crud.create_user(db, payload.username.strip(), hashed, role, email=payload.email.strip())
 
 
 # ---------------------------------------------------------------------------
