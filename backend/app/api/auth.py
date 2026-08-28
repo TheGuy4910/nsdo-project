@@ -33,7 +33,6 @@ from app.services.auth import (
     verify_password,
     create_access_token,
     decode_access_token,
-    ...
 )
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
