@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NSDO — Register</title>
+  <link rel="stylesheet" href="nsdo.css">
+  <style>
+    .login-wrap {
+      min-height: 100vh; display: flex; align-items: center;
+      justify-content: center; background: var(--bg); padding: 24px;
+    }
+    .login-card {
+      width: 100%; max-width: 400px;
+      background: var(--surface); border: 1px solid var(--rule);
+      border-radius: var(--radius-lg); box-shadow: var(--shadow);
+      padding: 40px 36px;
+    }
+    .login-brand {
+      font-family: var(--mono); font-size: 11px; font-weight: 600;
+      letter-spacing: .15em; text-transform: uppercase;
+      color: var(--green); margin-bottom: 6px;
+    }
+    .login-title {
+      font-size: 22px; font-weight: 700; color: var(--navy);
+      margin-bottom: 4px;
+    }
+    .login-sub {
+      font-size: 13px; color: var(--stone); margin-bottom: 28px;
+    }
+    .login-footer {
+      margin-top: 20px; font-size: 12px; color: var(--stone);
+      text-align: center; line-height: 1.6;
+    }
+    .login-footer a { color: var(--green); }
+  </style>
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-brand">NSDO</div>
+    <div class="login-title">Create account</div>
+    <div class="login-sub">Nigerian Student Diaspora Observatory</div>
+
+    <div id="register-error" class="hidden" style="margin-bottom:16px"></div>
+
+    <div class="form-group">
+      <label class="form-label" for="username">Username</label>
+      <input type="text" id="username" class="form-input" autocomplete="username"
+             placeholder="choose a username" autofocus>
+    </div>
+    <div class="form-group" style="margin-top:12px">
+      <label class="form-label" for="email">Email</label>
+      <input type="email" id="email" class="form-input" autocomplete="email"
+             placeholder="you@example.com">
+    </div>
+    <div class="form-group" style="margin-top:12px">
+      <label class="form-label" for="password">Password</label>
+      <input type="password" id="password" class="form-input"
+             autocomplete="new-password" placeholder="at least 8 characters">
+    </div>
+
+    <div style="margin-top:20px;display:flex;gap:10px;align-items:center">
+      <button class="btn btn-primary" id="btn-register" onclick="register()" style="flex:1">
+        Create account
+      </button>
+      <div id="register-spinner" class="hidden spinner" style="flex:none"></div>
+    </div>
+
+    <div class="login-footer">
+      <a href="login.html">Already have an account? Sign in</a>
+      &nbsp;&middot;&nbsp;
+      <a href="index.html">Back to dashboard</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API = '';
+
+  async function register() {
+    const username = document.getElementById('username').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const errDiv = document.getElementById('register-error');
+    errDiv.innerHTML = ''; errDiv.classList.add('hidden');
+
+    if (!username || !email || !password) {
+      showError('Username, email, and password are all required.');
+      return;
+    }
+
+    document.getElementById('btn-register').disabled = true;
+    document.getElementById('register-spinner').classList.remove('hidden');
+
+    try {
+      const res = await fetch(`${API}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        window.location.href = 'login.html';
+      } else {
+        showError(data.detail || 'Registration failed.');
+      }
+    } catch (err) {
+      showError('Network error — is the backend running?');
+    } finally {
+      document.getElementById('btn-register').disabled = false;
+      document.getElementById('register-spinner').classList.add('hidden');
+    }
+  }
+
+  function showError(msg) {
+    const d = document.getElementById('register-error');
+    d.innerHTML = `<div class="alert alert-error">${msg}</div>`;
+    d.classList.remove('hidden');
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') register();
+  });
+</script>
+</body>
+</html>
