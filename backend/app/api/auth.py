@@ -143,42 +143,25 @@ def register(
     current_user=Depends(_get_current_user_optional),
     db: Session = Depends(get_db),
 ):
-    """
-    Create a new user.
-
-    Decision A — bootstrap rule:
-      - If no users exist yet: anyone can register; the new user becomes admin.
-      - If users exist: only an authenticated admin can register new users.
-
-    Role of new users after bootstrap: always 'viewer'.
-    The first user (the bootstrap admin) gets role='admin'.
-    """
     user_count = crud.count_users(db)
     is_bootstrap = (user_count == 0)
-
-    # Validate username
     if not payload.username or not payload.username.strip():
         raise HTTPException(status_code=400, detail="Username cannot be empty.")
     if len(payload.username) > 128:
         raise HTTPException(status_code=400, detail="Username must be 128 characters or fewer.")
     if crud.get_user_by_username(db, payload.username.strip()):
         raise HTTPException(status_code=409, detail=f"Username '{payload.username}' is already taken.")
-
-    # Validate password
-if not payload.password or len(payload.password) < 8:
-    raise HTTPException(status_code=400, detail="Password must be at least 8 characters.")
-
-# Validate email
-if not payload.email or not payload.email.strip():
-    raise HTTPException(status_code=400, detail="Email is required.")
-if "@" not in payload.email or "." not in payload.email.split("@")[-1]:
-    raise HTTPException(status_code=400, detail="Please provide a valid email address.")
-if db.query(User).filter(User.email == payload.email.strip()).first():
-    raise HTTPException(status_code=409, detail=f"Email '{payload.email}' is already registered.")
-
-role = "admin" if is_bootstrap else "viewer"
-hashed = hash_password(payload.password)
-return crud.create_user(db, payload.username.strip(), hashed, role, email=payload.email.strip())
+    if not payload.password or len(payload.password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters.")
+    if not payload.email or not payload.email.strip():
+        raise HTTPException(status_code=400, detail="Email is required.")
+    if "@" not in payload.email or "." not in payload.email.split("@")[-1]:
+        raise HTTPException(status_code=400, detail="Please provide a valid email address.")
+    if db.query(User).filter(User.email == payload.email.strip()).first():
+        raise HTTPException(status_code=409, detail=f"Email '{payload.email}' is already registered.")
+    role = "admin" if is_bootstrap else "viewer"
+    hashed = hash_password(payload.password)
+    return crud.create_user(db, payload.username.strip(), hashed, role, email=payload.email.strip())
 # ---------------------------------------------------------------------------
 # GET /api/auth/me
 # ---------------------------------------------------------------------------
