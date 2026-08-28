@@ -219,9 +219,10 @@ function navHTML(activePage) {
         </a>`).join('')}
     </div>
     <div class="nav-status">
-      <span class="nav-status-dot" id="nav-status-dot"></span>
-      <span id="nav-status-text">Checking…</span>
-    </div>
+  <a href="login.html" id="nav-signin-link" style="color:inherit;text-decoration:none;margin-right:14px;font-size:13px;">Sign in</a>
+  <span class="nav-status-dot" id="nav-status-dot"></span>
+  <span id="nav-status-text">Checking…</span>
+</div>
   </div>
 </nav>`;
 }
