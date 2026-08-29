@@ -1,3 +1,4 @@
+(function() {
 /**
  * NSDO — Nigerian Student Diaspora Observatory
  * Shared API client and UI utilities
@@ -241,3 +242,4 @@ function adminIcon(){ return `<svg viewBox="0 0 16 16" fill="none" stroke="curre
 // ---------------------------------------------------------------------------
 window.NSDO = { apiFetch, apiFormData, fmt, el, tierBadge, statusBadge,
   countryChip, renderLoading, renderEmpty, renderError, initNav, navHTML, auth };
+})();
