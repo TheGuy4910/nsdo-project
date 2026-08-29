@@ -53,6 +53,16 @@ SOURCES = [
         "notes": "Compiles UNESCO UIS data into its own indicator series; treat as "
                  "the same underlying UNESCO source, not an independent count.",
     },
+    
+{
+        "short_code": "DAAD",
+        "name": "German Academic Exchange Service (DAAD)",
+        "organization_type": "ngo_or_press",
+        "home_country": "Germany",
+        "url": "https://www.daad.de",
+        "reliability_tier": "credible_secondary",
+        "notes": "Figures on Nigerian DAAD scholarship recipients drawn from DAAD's 2023 Annual Report, as reported via secondary sources; the primary Annual Report PDF was not directly consulted. Counts only DAAD-funded scholars, not total enrolled Nigerian students in Germany.",
+    },
     {
         "short_code": "PRESS_IRCC",
         "name": "News reporting citing Immigration, Refugees and Citizenship Canada",
@@ -112,15 +122,18 @@ METRIC_DEFINITIONS = [
                         "or official_secondary metric without an explicit caveat.",
         "unit": "rounded estimate, methodology undisclosed",
     },
-    {
-        "code": "unesco_outbound_mobility",
-        "name": "UNESCO outbound internationally mobile students",
-        "description": "Nigerian nationals enrolled in tertiary education outside "
-                        "Nigeria, as tracked by UNESCO UIS from national reporting "
-                        "systems worldwide. This is a global aggregate, not tied to a "
-                        "single destination country.",
-        "unit": "count of individuals",
-    },
+  {
+    "code": "unesco_outbound_mobility",
+    "name": "UNESCO outbound internationally mobile students",
+    "description": "Nigerian nationals enrolled in tertiary education outside Nigeria, as tracked by UNESCO UIS from national reporting systems worldwide. This is a global aggregate, not tied to a single destination country.",
+    "unit": "count of individuals",
+},
+{
+    "code": "daad_funded_scholarship_recipients",
+    "name": "DAAD-funded scholarship recipients",
+    "description": "Nigerian students who received DAAD funding in the given year, as reported in DAAD's Annual Report. This is NOT a total enrolled-student headcount — it counts only scholarship recipients, a subset of all Nigerian students in Germany, and is therefore not directly comparable to HESA or Open Doors enrollment figures.",
+    "unit": "count of individuals",
+},
 ]
 
 # Each dataset = one registered release. reference_period stays a string because
@@ -129,15 +142,13 @@ METRIC_DEFINITIONS = [
 # be misleading, not simplifying.
 DATASETS = [
     {
-        "source": "HESA", "metric": "hesa_enrolled_headcount",
-        "title": "HESA UK HE student statistics — Nigeria-domiciled students",
-        "destination_country": "United Kingdom", "reference_period": "2018/19",
-        "original_url": "https://www.icirnigeria.org/a-look-at-number-of-nigerian-students-studying-abroad/",
-        "limitations": "Pre-dates the 2019 Graduate Route visa change and the "
-                        "2023 naira devaluation; not comparable to post-2022 UK figures "
-                        "without accounting for policy context.",
-        "observations": [{"value": 10810}],
-    },
+    "source": "DAAD", "metric": "daad_funded_scholarship_recipients",
+    "title": "DAAD Annual Report — Nigerian scholarship recipients",
+    "destination_country": "Germany", "reference_period": "2023",
+    "original_url": "https://www.daad.de",
+    "limitations": "Counts DAAD-funded scholarship recipients only, not total enrolled Nigerian students in Germany; not comparable to HESA/Open Doors enrollment headcounts. Sourced via secondary reporting of DAAD's 2023 Annual Report, not the primary document itself.",
+    "observations": [{"value": 1638}],
+},
     {
         "source": "HESA", "metric": "hesa_enrolled_headcount",
         "title": "HESA UK HE student statistics — Nigeria-domiciled students",
