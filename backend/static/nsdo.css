@@ -309,3 +309,7 @@ tbody td { padding: 10px 14px; vertical-align: middle; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+@media (max-width: 640px) {
+  .nav-inner { flex-wrap: wrap; height: auto; padding: 10px 16px; }
+  .nav-links { order: 3; width: 100%; overflow-x: auto; flex-wrap: nowrap; }
+}
