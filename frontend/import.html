@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,827 +9,1160 @@
   <style>
     /* ---- Step indicator ---- */
     .steps {
-      display: flex; gap: 0; margin-bottom: 32px;
-      border: 1px solid var(--rule); border-radius: var(--radius-lg); overflow: hidden;
+      display: flex;
+      gap: 0;
+      margin-bottom: 32px;
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
     }
+
     .step {
-      flex: 1; padding: 14px 16px; display: flex; flex-direction: column; gap: 3px;
-      background: var(--surface); border-right: 1px solid var(--rule);
+      flex: 1;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      background: var(--surface);
+      border-right: 1px solid var(--rule);
       transition: background var(--transition);
     }
-    .step:last-child { border-right: none; }
-    .step-num { font-family: var(--mono); font-size: 10px; color: var(--stone); font-weight: 500; }
-    .step-label { font-size: 13px; font-weight: 600; color: var(--slate); }
-    .step.active { background: var(--navy-faint); }
-    .step.active .step-num { color: var(--green); }
-    .step.active .step-label { color: var(--navy); }
-    .step.done { background: var(--surface); }
-    .step.done .step-num { color: var(--green); }
-    .step.done .step-label { color: var(--slate); text-decoration: line-through; }
+
+    .step:last-child {
+      border-right: none;
+    }
+
+    .step-num {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--stone);
+      font-weight: 500;
+    }
+
+    .step-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--slate);
+    }
+
+    .step.active {
+      background: var(--navy-faint);
+    }
+
+    .step.active .step-num {
+      color: var(--green);
+    }
+
+    .step.active .step-label {
+      color: var(--navy);
+    }
+
+    .step.done {
+      background: var(--surface);
+    }
+
+    .step.done .step-num {
+      color: var(--green);
+    }
+
+    .step.done .step-label {
+      color: var(--slate);
+      text-decoration: line-through;
+    }
 
     /* ---- Upload zone ---- */
     .drop-zone {
-      border: 2px dashed var(--rule); border-radius: var(--radius-lg);
-      padding: 48px 24px; text-align: center; cursor: pointer;
+      border: 2px dashed var(--rule);
+      border-radius: var(--radius-lg);
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
       transition: border-color var(--transition), background var(--transition);
       background: var(--surface);
     }
-    .drop-zone:hover, .drop-zone.drag-over {
-      border-color: var(--navy); background: var(--navy-faint);
+
+    .drop-zone:hover,
+    .drop-zone.drag-over {
+      border-color: var(--navy);
+      background: var(--navy-faint);
     }
-    .drop-zone-icon { font-size: 32px; margin-bottom: 12px; }
-    .drop-zone-label { font-size: 15px; font-weight: 600; color: var(--navy); margin-bottom: 4px; }
-    .drop-zone-hint { font-size: 13px; color: var(--stone); }
-    #file-input { display: none; }
+
+    .drop-zone-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+
+    .drop-zone-label {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--navy);
+      margin-bottom: 4px;
+    }
+
+    .drop-zone-hint {
+      font-size: 13px;
+      color: var(--stone);
+    }
+
+    #file-input {
+      display: none;
+    }
 
     /* ---- File type selector ---- */
-    .type-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
-    .type-tab {
-      padding: 8px 20px; border-radius: var(--radius);
-      border: 1.5px solid var(--rule); background: var(--surface);
-      font-size: 13px; font-weight: 500; color: var(--slate);
-      cursor: pointer; transition: all var(--transition);
+    .type-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
     }
-    .type-tab:hover { border-color: var(--navy); color: var(--navy); }
-    .type-tab.active { background: var(--navy); color: #fff; border-color: var(--navy); }
 
-    /* ---- Sheet selector ---- */
-    .sheet-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-    .sheet-btn {
-      padding: 6px 14px; border-radius: var(--radius-sm);
-      border: 1.5px solid var(--rule); background: var(--surface);
-      font-family: var(--mono); font-size: 12px; color: var(--slate); cursor: pointer;
+    .type-tab {
+      padding: 8px 20px;
+      border-radius: var(--radius);
+      border: 1.5px solid var(--rule);
+      background: var(--surface);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--slate);
+      cursor: pointer;
       transition: all var(--transition);
     }
-    .sheet-btn:hover { border-color: var(--navy); }
-    .sheet-btn.selected { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+    .type-tab:hover {
+      border-color: var(--navy);
+      color: var(--navy);
+    }
+
+    .type-tab.active {
+      background: var(--navy);
+      color: #fff;
+      border-color: var(--navy);
+    }
+
+    /* ---- Sheet selector ---- */
+    .sheet-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .sheet-btn {
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--rule);
+      background: var(--surface);
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--slate);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .sheet-btn:hover {
+      border-color: var(--navy);
+    }
+
+    .sheet-btn.selected {
+      background: var(--navy);
+      color: #fff;
+      border-color: var(--navy);
+    }
 
     /* ---- Preview table ---- */
-    .preview-table-wrap { overflow-x: auto; margin-top: 12px; max-height: 280px; overflow-y: auto; }
-    .preview-table { font-size: 12px; }
-    .preview-table thead th { position: sticky; top: 0; background: var(--bg); }
-    .col-mapped { background: #EDF6F0 !important; }
+    .preview-table-wrap {
+      overflow-x: auto;
+      margin-top: 12px;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    .preview-table {
+      font-size: 12px;
+    }
+
+    .preview-table thead th {
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+    }
+
+    .col-mapped {
+      background: #EDF6F0 !important;
+    }
 
     /* ---- Mapping editor ---- */
     .mapping-grid {
-      display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px 12px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 10px 12px;
       align-items: center;
     }
-    .mapping-arrow { color: var(--stone); font-size: 16px; text-align: center; }
-    .mapping-label { font-family: var(--mono); font-size: 12px; color: var(--slate); }
-    .mapping-canonical { font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--navy); }
-    .mapping-required::after { content: '*'; color: var(--red); margin-left: 2px; }
+
+    .mapping-arrow {
+      color: var(--stone);
+      font-size: 16px;
+      text-align: center;
+    }
+
+    .mapping-label {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--slate);
+    }
+
+    .mapping-canonical {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--navy);
+    }
+
+    .mapping-required::after {
+      content: '*';
+      color: var(--red);
+      margin-left: 2px;
+    }
 
     /* ---- Ambiguity alerts ---- */
-    .ambiguity-list { display: flex; flex-direction: column; gap: 8px; }
-    .ambiguity-item {
-      background: var(--amber-light); border: 1px solid #E6A835;
-      border-radius: var(--radius); padding: 12px 14px;
+    .ambiguity-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
-    .ambiguity-field { font-family: var(--mono); font-size: 12px; font-weight: 600; color: #7A4C05; }
-    .ambiguity-candidates { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+
+    .ambiguity-item {
+      background: var(--amber-light);
+      border: 1px solid #E6A835;
+      border-radius: var(--radius);
+      padding: 12px 14px;
+    }
+
+    .ambiguity-field {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: #7A4C05;
+    }
+
+    .ambiguity-candidates {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
     .ambiguity-candidate {
-      padding: 4px 10px; border-radius: var(--radius-sm);
-      border: 1.5px solid #E6A835; background: #fff;
-      font-family: var(--mono); font-size: 11px; color: #7A4C05; cursor: pointer;
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid #E6A835;
+      background: #fff;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: #7A4C05;
+      cursor: pointer;
       transition: all var(--transition);
     }
-    .ambiguity-candidate.selected { background: var(--amber); color: #fff; border-color: var(--amber); }
+
+    .ambiguity-candidate.selected {
+      background: var(--amber);
+      color: #fff;
+      border-color: var(--amber);
+    }
 
     /* ---- Summary tiles ---- */
-    .summary-tiles { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
-    .summary-tile { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 14px; }
-    .summary-tile-val { font-family: var(--mono); font-size: 24px; font-weight: 500; color: var(--navy); }
-    .summary-tile-label { font-size: 11px; color: var(--stone); margin-top: 2px; }
-    .summary-tile.warn .summary-tile-val { color: var(--amber); }
-    .summary-tile.err .summary-tile-val { color: var(--red); }
-    .summary-tile.ok .summary-tile-val { color: var(--green); }
+    .summary-tiles {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .summary-tile {
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+
+    .summary-tile-val {
+      font-family: var(--mono);
+      font-size: 24px;
+      font-weight: 500;
+      color: var(--navy);
+    }
+
+    .summary-tile-label {
+      font-size: 11px;
+      color: var(--stone);
+      margin-top: 2px;
+    }
+
+    .summary-tile.warn .summary-tile-val {
+      color: var(--amber);
+    }
+
+    .summary-tile.err .summary-tile-val {
+      color: var(--red);
+    }
+
+    .summary-tile.ok .summary-tile-val {
+      color: var(--green);
+    }
 
     /* ---- Issue list ---- */
-    .issue-list { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; }
-    .issue-row {
-      display: grid; grid-template-columns: 60px 80px 1fr;
-      gap: 8px; font-size: 12.5px; padding: 6px 10px;
-      border-radius: var(--radius-sm); align-items: start;
+    .issue-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 260px;
+      overflow-y: auto;
     }
-    .issue-row.error   { background: var(--red-light); }
-    .issue-row.warning { background: var(--amber-light); }
-    .issue-row.info    { background: var(--navy-faint); }
-    .issue-sev { font-family: var(--mono); font-size: 10px; font-weight: 600; text-transform: uppercase; }
-    .issue-field { font-family: var(--mono); font-size: 11px; color: var(--slate); }
+
+    .issue-row {
+      display: grid;
+      grid-template-columns: 60px 80px 1fr;
+      gap: 8px;
+      font-size: 12.5px;
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      align-items: start;
+    }
+
+    .issue-row.error {
+      background: var(--red-light);
+    }
+
+    .issue-row.warning {
+      background: var(--amber-light);
+    }
+
+    .issue-row.info {
+      background: var(--navy-faint);
+    }
+
+    .issue-sev {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .issue-field {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--slate);
+    }
 
     /* ---- Meta form ---- */
-    .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    @media (max-width: 700px) { .meta-grid { grid-template-columns: 1fr; } }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 700px) {
+      .meta-grid {
+        grid-template-columns: 1fr;
+      }
+    }
 
     /* ---- Page sections ---- */
-    .import-section { margin-bottom: 28px; }
+    .import-section {
+      margin-bottom: 28px;
+    }
 
     /* ---- Commit result ---- */
     .commit-result {
-      text-align: center; padding: 48px 24px;
+      text-align: center;
+      padding: 48px 24px;
     }
-    .commit-icon { font-size: 48px; margin-bottom: 16px; }
-    .commit-title { font-size: 22px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
-    .commit-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 24px; }
-    .commit-stats { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; margin-bottom: 28px; }
-    .commit-stat-val { font-family: var(--mono); font-size: 28px; font-weight: 500; }
-    .commit-stat-label { font-size: 11px; color: var(--stone); margin-top: 2px; }
-    .commit-stat.ok .commit-stat-val { color: var(--green); }
-    .commit-stat.skip .commit-stat-val { color: var(--amber); }
 
-    .hidden { display: none !important; }
+    .commit-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .commit-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 8px;
+    }
+
+    .commit-sub {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    .commit-stats {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+    }
+
+    .commit-stat-val {
+      font-family: var(--mono);
+      font-size: 28px;
+      font-weight: 500;
+    }
+
+    .commit-stat-label {
+      font-size: 11px;
+      color: var(--stone);
+      margin-top: 2px;
+    }
+
+    .commit-stat.ok .commit-stat-val {
+      color: var(--green);
+    }
+
+    .commit-stat.skip .commit-stat-val {
+      color: var(--amber);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .admin-gate {
+      max-width: 480px;
+      margin: 80px auto;
+      text-align: center;
+      padding: 0 24px;
+    }
+
+    .admin-gate-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 8px;
+    }
+
+    .admin-gate-sub {
+      font-size: 14px;
+      color: var(--stone);
+      margin-bottom: 24px;
+    }
   </style>
 </head>
+
 <body class="site-wrap">
-<div id="nav-placeholder"></div>
+  <div id="nav-placeholder"></div>
 
-<main class="page-content">
-  <header class="page-header">
-    <p class="page-eyebrow">Data Pipeline</p>
-    <h1 class="page-title">Import Dataset</h1>
-    <p class="page-subtitle">
-      Upload a CSV or XLSX file. The pipeline previews and validates before writing anything —
-      you review the mapping and any ambiguities before committing.
-    </p>
-  </header>
+  <main class="page-content">
+    <header class="page-header">
+      <p class="page-eyebrow">Data Pipeline</p>
+      <h1 class="page-title">Import Dataset</h1>
+      <p class="page-subtitle">
+        Upload a CSV or XLSX file. The pipeline previews and validates before writing anything —
+        you review the mapping and any ambiguities before committing.
+      </p>
+    </header>
 
-  <!-- Step indicator -->
-  <div class="steps" id="step-indicator">
-    <div class="step active" id="step-1">
-      <span class="step-num">Step 1</span>
-      <span class="step-label">Upload file</span>
+    <!-- Auth gate -->
+    <div id="auth-loading" class="state-container">
+      <div class="spinner"></div>
+      <p class="state-body">Checking authentication…</p>
     </div>
-    <div class="step" id="step-2">
-      <span class="step-num">Step 2</span>
-      <span class="step-label">Review preview</span>
-    </div>
-    <div class="step" id="step-3">
-      <span class="step-num">Step 3</span>
-      <span class="step-label">Dataset metadata</span>
-    </div>
-    <div class="step" id="step-4">
-      <span class="step-num">Step 4</span>
-      <span class="step-label">Commit</span>
-    </div>
-  </div>
 
-  <!-- ===== STEP 1: Upload ===== -->
-  <div id="panel-upload">
-    <div class="card import-section">
-      <div class="card-header">
-        <span class="card-title">File type</span>
-      </div>
-      <div class="card-body">
-        <div class="type-tabs">
-          <button class="type-tab active" id="tab-csv" onclick="selectType('csv')">CSV</button>
-          <button class="type-tab" id="tab-xlsx" onclick="selectType('xlsx')">Excel / XLSX</button>
-        </div>
-        <p id="type-hint" class="form-hint">
-          CSV: one header row, any delimiter. UTF-8 or UTF-8-BOM.
-        </p>
+    <div id="not-signed-in" class="hidden">
+      <div class="admin-gate">
+        <div class="admin-gate-title">Sign in required</div>
+        <div class="admin-gate-sub">This page is restricted to admin users.</div>
+        <a href="login.html?next=import.html" class="btn btn-primary">Sign in →</a>
       </div>
     </div>
 
-    <div class="card import-section">
-      <div class="card-header"><span class="card-title">Upload file</span></div>
-      <div class="card-body">
-        <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
-          <div class="drop-zone-icon">⬆</div>
-          <div class="drop-zone-label">Drop file here or click to browse</div>
-          <div class="drop-zone-hint" id="drop-zone-hint">Accepts .csv files</div>
+    <div id="not-admin" class="hidden">
+      <div class="admin-gate">
+        <div class="admin-gate-title">Admin access required</div>
+        <div class="admin-gate-sub" id="not-admin-sub">Your account does not have admin privileges.</div>
+        <a href="index.html" class="btn btn-outline">← Back to dashboard</a>
+      </div>
+    </div>
+
+    <div id="import-content" class="hidden">
+      <!-- Step indicator -->
+      <div class="steps" id="step-indicator">
+        <div class="step active" id="step-1">
+          <span class="step-num">Step 1</span>
+          <span class="step-label">Upload file</span>
         </div>
-        <input type="file" id="file-input" accept=".csv">
-        <div id="file-chosen" class="hidden" style="margin-top:12px">
-          <div class="alert alert-success">
-            <strong id="chosen-name"></strong>&nbsp;— ready to preview
+        <div class="step" id="step-2">
+          <span class="step-num">Step 2</span>
+          <span class="step-label">Review preview</span>
+        </div>
+        <div class="step" id="step-3">
+          <span class="step-num">Step 3</span>
+          <span class="step-label">Dataset metadata</span>
+        </div>
+        <div class="step" id="step-4">
+          <span class="step-num">Step 4</span>
+          <span class="step-label">Commit</span>
+        </div>
+      </div>
+
+      <!-- ===== STEP 1: Upload ===== -->
+      <div id="panel-upload">
+        <div class="card import-section">
+          <div class="card-header">
+            <span class="card-title">File type</span>
+          </div>
+          <div class="card-body">
+            <div class="type-tabs">
+              <button class="type-tab active" id="tab-csv" onclick="selectType('csv')">CSV</button>
+              <button class="type-tab" id="tab-xlsx" onclick="selectType('xlsx')">Excel / XLSX</button>
+            </div>
+            <p id="type-hint" class="form-hint">
+              CSV: one header row, any delimiter. UTF-8 or UTF-8-BOM.
+            </p>
           </div>
         </div>
-        <div id="xlsx-sheet-panel" class="hidden" style="margin-top:16px">
-          <div class="form-group">
-            <label class="form-label">Select sheet</label>
-            <div class="sheet-list" id="sheet-list"></div>
+
+        <div class="card import-section">
+          <div class="card-header"><span class="card-title">Upload file</span></div>
+          <div class="card-body">
+            <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+              <div class="drop-zone-icon">⬆</div>
+              <div class="drop-zone-label">Drop file here or click to browse</div>
+              <div class="drop-zone-hint" id="drop-zone-hint">Accepts .csv files</div>
+            </div>
+            <input type="file" id="file-input" accept=".csv">
+            <div id="file-chosen" class="hidden" style="margin-top:12px">
+              <div class="alert alert-success">
+                <strong id="chosen-name"></strong>&nbsp;— ready to preview
+              </div>
+            </div>
+            <div id="xlsx-sheet-panel" class="hidden" style="margin-top:16px">
+              <div class="form-group">
+                <label class="form-label">Select sheet</label>
+                <div class="sheet-list" id="sheet-list"></div>
+              </div>
+            </div>
+            <div style="margin-top:16px;display:flex;gap:10px">
+              <button class="btn btn-primary" id="btn-preview" disabled onclick="runPreview()">
+                Preview →
+              </button>
+              <div id="preview-spinner" class="hidden" style="display:flex;align-items:center;gap:8px">
+                <div class="spinner"></div>
+                <span style="font-size:13px;color:var(--stone)">Parsing file…</span>
+              </div>
+            </div>
+            <div id="upload-error" class="hidden" style="margin-top:12px"></div>
           </div>
         </div>
-        <div style="margin-top:16px;display:flex;gap:10px">
-          <button class="btn btn-primary" id="btn-preview" disabled onclick="runPreview()">
-            Preview →
+      </div>
+
+      <!-- ===== STEP 2: Preview + mapping ===== -->
+      <div id="panel-preview" class="hidden">
+        <div class="card import-section">
+          <div class="card-header">
+            <span class="card-title">Validation summary</span>
+            <button class="btn btn-outline btn-sm" onclick="goBack()">← Change file</button>
+          </div>
+          <div class="card-body">
+            <div class="summary-tiles" id="summary-tiles"></div>
+          </div>
+        </div>
+
+        <div id="ambiguity-panel" class="card import-section hidden">
+          <div class="card-header">
+            <span class="card-title">⚠ Mapping ambiguities — review required</span>
+          </div>
+          <div class="card-body">
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">
+              Multiple source columns matched the same canonical field. Select which column to use.
+              Fields marked <strong>required</strong> must be resolved before committing.
+            </p>
+            <div class="ambiguity-list" id="ambiguity-list"></div>
+          </div>
+        </div>
+
+        <div class="card import-section">
+          <div class="card-header">
+            <span class="card-title">Column mapping</span>
+            <span style="font-size:12px;color:var(--stone)">Auto-suggested — adjust if needed</span>
+          </div>
+          <div class="card-body">
+            <div class="mapping-grid" id="mapping-grid"></div>
+          </div>
+        </div>
+
+        <div class="card import-section">
+          <div class="card-header">
+            <span class="card-title">Sample rows (first 10)</span>
+          </div>
+          <div class="card-body" style="padding:0">
+            <div class="preview-table-wrap">
+              <table class="preview-table">
+                <thead id="preview-thead"></thead>
+                <tbody id="preview-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="issues-panel" class="card import-section hidden">
+          <div class="card-header">
+            <span class="card-title">Validation issues</span>
+            <span style="font-size:12px;color:var(--stone)">Errors are never imported; warnings are optional</span>
+          </div>
+          <div class="card-body" style="padding:0 0 8px">
+            <div class="issue-list" id="issue-list"></div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button class="btn btn-primary" id="btn-to-meta" onclick="goToMeta()">Continue to metadata →</button>
+        </div>
+      </div>
+
+      <!-- ===== STEP 3: Dataset metadata ===== -->
+      <div id="panel-meta" class="hidden">
+        <div class="card import-section">
+          <div class="card-header">
+            <span class="card-title">Dataset metadata</span>
+            <button class="btn btn-outline btn-sm" onclick="showStep(2)">← Back to preview</button>
+          </div>
+          <div class="card-body">
+            <div class="alert alert-info" style="margin-bottom:20px">
+              <strong>Required:</strong> every dataset must state what it <em>does not</em> tell you.
+              This is enforced by the API — the commit will be rejected if limitations is empty.
+            </div>
+
+            <div class="meta-grid">
+              <div class="form-group">
+                <label class="form-label">Source <span class="required">*</span></label>
+                <select id="m-source" class="form-select">
+                  <option value="">Loading sources…</option>
+                </select>
+                <span class="form-hint">Which organisation published this data?</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Metric definition <span class="required">*</span></label>
+                <select id="m-metric" class="form-select">
+                  <option value="">Loading metrics…</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Dataset title <span class="required">*</span></label>
+                <input type="text" id="m-title" class="form-input" placeholder="e.g. HESA Nigerian students UK 2022/23">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Reference period <span class="required">*</span></label>
+                <input type="text" id="m-period" class="form-input" placeholder="e.g. 2022/23 or 2024">
+                <span class="form-hint">Academic year (2022/23) or calendar year (2024)</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Original URL</label>
+                <input type="url" id="m-url" class="form-input" placeholder="https://…">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Publication date</label>
+                <input type="date" id="m-pubdate" class="form-input">
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top:16px">
+              <label class="form-label">Stated limitations <span class="required">*</span></label>
+              <textarea id="m-limitations" class="form-textarea" rows="4"
+                placeholder="Describe what this dataset does NOT tell you: methodology gaps, population coverage, known undercounts, reference-period definition, etc."></textarea>
+              <span class="form-hint">Cannot be empty — this is the project's core data-integrity commitment.</span>
+            </div>
+
+            <div class="form-group" style="margin-top:12px">
+              <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                <input type="checkbox" id="m-include-warnings" checked>
+                Include warning-level rows (rows with non-critical issues)
+              </label>
+            </div>
+            <div class="form-group" style="margin-top:8px">
+              <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                <input type="checkbox" id="m-include-duplicates">
+                Include flagged-duplicate rows
+              </label>
+            </div>
+
+            <div id="meta-error" class="hidden" style="margin-top:16px"></div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-success" id="btn-commit" onclick="commitImport()">
+            Commit import
           </button>
-          <div id="preview-spinner" class="hidden" style="display:flex;align-items:center;gap:8px">
+          <div id="commit-spinner" class="hidden" style="display:flex;align-items:center;gap:8px">
             <div class="spinner"></div>
-            <span style="font-size:13px;color:var(--stone)">Parsing file…</span>
+            <span style="font-size:13px;color:var(--stone)">Committing…</span>
           </div>
         </div>
-        <div id="upload-error" class="hidden" style="margin-top:12px"></div>
       </div>
-    </div>
-  </div>
 
-  <!-- ===== STEP 2: Preview + mapping ===== -->
-  <div id="panel-preview" class="hidden">
-    <div class="card import-section">
-      <div class="card-header">
-        <span class="card-title">Validation summary</span>
-        <button class="btn btn-outline btn-sm" onclick="goBack()">← Change file</button>
-      </div>
-      <div class="card-body">
-        <div class="summary-tiles" id="summary-tiles"></div>
-      </div>
-    </div>
-
-    <div id="ambiguity-panel" class="card import-section hidden">
-      <div class="card-header">
-        <span class="card-title">⚠ Mapping ambiguities — review required</span>
-      </div>
-      <div class="card-body">
-        <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">
-          Multiple source columns matched the same canonical field. Select which column to use.
-          Fields marked <strong>required</strong> must be resolved before committing.
-        </p>
-        <div class="ambiguity-list" id="ambiguity-list"></div>
-      </div>
-    </div>
-
-    <div class="card import-section">
-      <div class="card-header">
-        <span class="card-title">Column mapping</span>
-        <span style="font-size:12px;color:var(--stone)">Auto-suggested — adjust if needed</span>
-      </div>
-      <div class="card-body">
-        <div class="mapping-grid" id="mapping-grid"></div>
-      </div>
-    </div>
-
-    <div class="card import-section">
-      <div class="card-header">
-        <span class="card-title">Sample rows (first 10)</span>
-      </div>
-      <div class="card-body" style="padding:0">
-        <div class="preview-table-wrap">
-          <table class="preview-table">
-            <thead id="preview-thead"></thead>
-            <tbody id="preview-tbody"></tbody>
-          </table>
+      <!-- ===== STEP 4: Result ===== -->
+      <div id="panel-result" class="hidden">
+        <div class="card">
+          <div class="card-body commit-result" id="commit-result-body"></div>
         </div>
       </div>
+
     </div>
+  </main>
 
-    <div id="issues-panel" class="card import-section hidden">
-      <div class="card-header">
-        <span class="card-title">Validation issues</span>
-        <span style="font-size:12px;color:var(--stone)">Errors are never imported; warnings are optional</span>
-      </div>
-      <div class="card-body" style="padding:0 0 8px">
-        <div class="issue-list" id="issue-list"></div>
-      </div>
-    </div>
+  <script src="nsdo.js"></script>
+  <script>
+    const { apiFetch, apiFormData, fmt, el, tierBadge, statusBadge, renderError, navHTML, initNav, auth } = window.NSDO;
 
-    <div style="display:flex;gap:10px;margin-top:8px">
-      <button class="btn btn-primary" id="btn-to-meta" onclick="goToMeta()">Continue to metadata →</button>
-    </div>
-  </div>
+    document.getElementById('nav-placeholder').innerHTML = navHTML('import');
+    initNav('import');
 
-  <!-- ===== STEP 3: Dataset metadata ===== -->
-  <div id="panel-meta" class="hidden">
-    <div class="card import-section">
-      <div class="card-header">
-        <span class="card-title">Dataset metadata</span>
-        <button class="btn btn-outline btn-sm" onclick="showStep(2)">← Back to preview</button>
-      </div>
-      <div class="card-body">
-        <div class="alert alert-info" style="margin-bottom:20px">
-          <strong>Required:</strong> every dataset must state what it <em>does not</em> tell you.
-          This is enforced by the API — the commit will be rejected if limitations is empty.
-        </div>
+async function checkAuth() { if (!auth.isSignedIn()) { document.getElementById('auth-loading').classList.add('hidden'); document.getElementById('not-signed-in').classList.remove('hidden'); return; } apiFetch('/api/auth/me').then(function(res) { document.getElementById('auth-loading').classList.add('hidden'); if (!res.ok) { auth.clearToken(); document.getElementById('not-signed-in').classList.remove('hidden'); return; } var me = res.data; if (me.role !== 'admin') { document.getElementById('not-admin-sub').textContent = 'Signed in as "' + me.username + '" (role: ' + me.role + '). Admin role required.'; document.getElementById('not-admin').classList.remove('hidden'); return; } document.getElementById('import-content').classList.remove('hidden'); }); }
+    // ── State ────────────────────────────────────────────────────────────────
+    let state = {
+      type: 'csv',           // 'csv' | 'xlsx'
+      file: null,
+      sheets: [],
+      selectedSheet: null,
+      preview: null,         // last preview response
+      mapping: {},           // { canonical_field: source_column }
+      sources: [],
+      metrics: [],
+    };
 
-        <div class="meta-grid">
-          <div class="form-group">
-            <label class="form-label">Source <span class="required">*</span></label>
-            <select id="m-source" class="form-select">
-              <option value="">Loading sources…</option>
-            </select>
-            <span class="form-hint">Which organisation published this data?</span>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Metric definition <span class="required">*</span></label>
-            <select id="m-metric" class="form-select">
-              <option value="">Loading metrics…</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Dataset title <span class="required">*</span></label>
-            <input type="text" id="m-title" class="form-input" placeholder="e.g. HESA Nigerian students UK 2022/23">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Reference period <span class="required">*</span></label>
-            <input type="text" id="m-period" class="form-input" placeholder="e.g. 2022/23 or 2024">
-            <span class="form-hint">Academic year (2022/23) or calendar year (2024)</span>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Original URL</label>
-            <input type="url" id="m-url" class="form-input" placeholder="https://…">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Publication date</label>
-            <input type="date" id="m-pubdate" class="form-input">
-          </div>
-        </div>
-
-        <div class="form-group" style="margin-top:16px">
-          <label class="form-label">Stated limitations <span class="required">*</span></label>
-          <textarea id="m-limitations" class="form-textarea" rows="4"
-            placeholder="Describe what this dataset does NOT tell you: methodology gaps, population coverage, known undercounts, reference-period definition, etc."></textarea>
-          <span class="form-hint">Cannot be empty — this is the project's core data-integrity commitment.</span>
-        </div>
-
-        <div class="form-group" style="margin-top:12px">
-          <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
-            <input type="checkbox" id="m-include-warnings" checked>
-            Include warning-level rows (rows with non-critical issues)
-          </label>
-        </div>
-        <div class="form-group" style="margin-top:8px">
-          <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
-            <input type="checkbox" id="m-include-duplicates">
-            Include flagged-duplicate rows
-          </label>
-        </div>
-
-        <div id="meta-error" class="hidden" style="margin-top:16px"></div>
-      </div>
-    </div>
-
-    <div style="display:flex;gap:10px">
-      <button class="btn btn-success" id="btn-commit" onclick="commitImport()">
-        Commit import
-      </button>
-      <div id="commit-spinner" class="hidden" style="display:flex;align-items:center;gap:8px">
-        <div class="spinner"></div>
-        <span style="font-size:13px;color:var(--stone)">Committing…</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== STEP 4: Result ===== -->
-  <div id="panel-result" class="hidden">
-    <div class="card">
-      <div class="card-body commit-result" id="commit-result-body"></div>
-    </div>
-  </div>
-
-</main>
-
-<script src="nsdo.js"></script>
-<script>
-const { apiFetch, apiFormData, fmt, el, tierBadge, statusBadge, renderError, navHTML, initNav } = window.NSDO;
-
-document.getElementById('nav-placeholder').innerHTML = navHTML('import');
-initNav('import');
-
-// ── State ────────────────────────────────────────────────────────────────
-let state = {
-  type: 'csv',           // 'csv' | 'xlsx'
-  file: null,
-  sheets: [],
-  selectedSheet: null,
-  preview: null,         // last preview response
-  mapping: {},           // { canonical_field: source_column }
-  sources: [],
-  metrics: [],
-};
-
-// ── Step navigation ──────────────────────────────────────────────────────
-function showStep(n) {
-  ['panel-upload','panel-preview','panel-meta','panel-result'].forEach((id,i) => {
-    document.getElementById(id).classList.toggle('hidden', i+1 !== n);
-  });
-  [1,2,3,4].forEach(i => {
-    const s = document.getElementById(`step-${i}`);
-    s.classList.remove('active','done');
-    if (i === n) s.classList.add('active');
-    else if (i < n) s.classList.add('done');
-  });
-}
-
-function goBack() { showStep(1); }
-
-// ── File type selector ───────────────────────────────────────────────────
-function selectType(type) {
-  state.type = type;
-  document.getElementById('tab-csv').classList.toggle('active', type === 'csv');
-  document.getElementById('tab-xlsx').classList.toggle('active', type === 'xlsx');
-  document.getElementById('type-hint').textContent = type === 'csv'
-    ? 'CSV: one header row, any delimiter. UTF-8 or UTF-8-BOM.'
-    : 'XLSX: you can choose which sheet to import after uploading.';
-  document.getElementById('drop-zone-hint').textContent =
-    type === 'csv' ? 'Accepts .csv files' : 'Accepts .xlsx, .xls files';
-  document.getElementById('file-input').accept = type === 'csv' ? '.csv' : '.xlsx,.xls';
-
-  // Reset file state
-  state.file = null; state.sheets = []; state.selectedSheet = null;
-  document.getElementById('file-chosen').classList.add('hidden');
-  document.getElementById('xlsx-sheet-panel').classList.add('hidden');
-  document.getElementById('btn-preview').disabled = true;
-}
-
-// ── Drag-and-drop ────────────────────────────────────────────────────────
-const dropZone = document.getElementById('drop-zone');
-dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-dropZone.addEventListener('drop', e => {
-  e.preventDefault(); dropZone.classList.remove('drag-over');
-  const f = e.dataTransfer.files[0];
-  if (f) handleFile(f);
-});
-document.getElementById('file-input').addEventListener('change', e => {
-  if (e.target.files[0]) handleFile(e.target.files[0]);
-});
-
-async function handleFile(file) {
-  state.file = file;
-  document.getElementById('chosen-name').textContent = file.name;
-  document.getElementById('file-chosen').classList.remove('hidden');
-  document.getElementById('upload-error').classList.add('hidden');
-
-  if (state.type === 'xlsx') {
-    document.getElementById('btn-preview').disabled = true;
-    // List sheets first
-    const fd = new FormData();
-    fd.append('file', file);
-    const res = await apiFormData('/api/datasets/import/xlsx/sheets', fd);
-    if (!res.ok) {
-      showUploadError(`Could not read workbook: ${res.data?.detail ?? res.error ?? 'Unknown error'}`);
-      return;
-    }
-    state.sheets = res.data.sheets ?? [];
-    renderSheets(state.sheets);
-  } else {
-    state.selectedSheet = null;
-    document.getElementById('xlsx-sheet-panel').classList.add('hidden');
-    document.getElementById('btn-preview').disabled = false;
-  }
-}
-
-function renderSheets(sheets) {
-  const panel = document.getElementById('xlsx-sheet-panel');
-  const list  = document.getElementById('sheet-list');
-  list.innerHTML = '';
-  sheets.forEach(name => {
-    const btn = el('button', { class: 'sheet-btn', type: 'button' }, name);
-    btn.addEventListener('click', () => {
-      state.selectedSheet = name;
-      list.querySelectorAll('.sheet-btn').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      document.getElementById('btn-preview').disabled = false;
-    });
-    list.appendChild(btn);
-  });
-  panel.classList.remove('hidden');
-  // Auto-select first
-  if (sheets.length === 1) list.querySelector('.sheet-btn').click();
-}
-
-function showUploadError(msg) {
-  const div = document.getElementById('upload-error');
-  div.innerHTML = '';
-  div.appendChild(el('div', { class: 'alert alert-error' }, msg));
-  div.classList.remove('hidden');
-}
-
-// ── Preview ──────────────────────────────────────────────────────────────
-async function runPreview() {
-  const btn = document.getElementById('btn-preview');
-  btn.disabled = true;
-  document.getElementById('preview-spinner').classList.remove('hidden');
-  document.getElementById('upload-error').classList.add('hidden');
-
-  const fd = new FormData();
-  fd.append('file', state.file);
-  if (state.type === 'xlsx' && state.selectedSheet) {
-    fd.append('sheet_name', state.selectedSheet);
-  }
-
-  const path = state.type === 'csv'
-    ? '/api/datasets/import/csv/preview'
-    : '/api/datasets/import/xlsx/preview';
-
-  const res = await apiFormData(path, fd);
-  document.getElementById('preview-spinner').classList.add('hidden');
-  btn.disabled = false;
-
-  if (!res.ok) {
-    showUploadError(`Preview failed: ${res.data?.detail ?? res.error ?? 'Unknown error'}`);
-    return;
-  }
-
-  state.preview = res.data;
-  state.mapping  = { ...res.data.mapping_used };
-  renderPreview(res.data);
-  showStep(2);
-}
-
-function renderPreview(p) {
-  // Summary tiles
-  const s = p.summary;
-  const tiles = document.getElementById('summary-tiles');
-  tiles.innerHTML = '';
-  const mkTile = (val, label, cls='') =>
-    el('div', { class: `summary-tile ${cls}` },
-      el('div', { class: 'summary-tile-val' }, String(val)),
-      el('div', { class: 'summary-tile-label' }, label),
-    );
-  tiles.appendChild(mkTile(s.total_records, 'Total rows', ''));
-  tiles.appendChild(mkTile(s.valid_records, 'Valid rows', s.valid_records > 0 ? 'ok' : ''));
-  tiles.appendChild(mkTile(s.error_records, 'Error rows', s.error_records > 0 ? 'err' : ''));
-  tiles.appendChild(mkTile(s.duplicate_records, 'Duplicates', s.duplicate_records > 0 ? 'warn' : ''));
-
-  // Ambiguities
-  const ambPanel = document.getElementById('ambiguity-panel');
-  const ambList  = document.getElementById('ambiguity-list');
-  if (p.ambiguities?.length) {
-    ambPanel.classList.remove('hidden');
-    ambList.innerHTML = '';
-    p.ambiguities.forEach(amb => {
-      const item = el('div', { class: 'ambiguity-item' },
-        el('div', { class: 'ambiguity-field' },
-          `${amb.canonical_field}${amb.required ? ' (required)' : ''} — ${amb.reason}`
-        ),
-        el('div', { class: 'ambiguity-candidates' },
-          ...amb.candidates.map(c => {
-            const btn = el('button', { class: 'ambiguity-candidate', type: 'button' }, c.column);
-            btn.addEventListener('click', () => {
-              item.querySelectorAll('.ambiguity-candidate').forEach(b => b.classList.remove('selected'));
-              btn.classList.add('selected');
-              state.mapping[amb.canonical_field] = c.column;
-              // Update the corresponding select in the mapping grid
-              const sel = document.querySelector(`select[data-canonical="${amb.canonical_field}"]`);
-              if (sel) sel.value = c.column;
-            });
-            // If currently mapped to this column, pre-select it
-            if (state.mapping[amb.canonical_field] === c.column) btn.classList.add('selected');
-            return btn;
-          })
-        )
-      );
-      ambList.appendChild(item);
-    });
-  } else {
-    ambPanel.classList.add('hidden');
-  }
-
-  // Mapping editor
-  const CANONICAL = [
-    { field:'destination_country', label:'Destination country', required:true },
-    { field:'student_count',       label:'Student count',       required:true },
-    { field:'academic_year',       label:'Academic year',       required:false },
-    { field:'nigerian_state',      label:'Nigerian state',      required:false },
-    { field:'institution',         label:'Institution',         required:false },
-    { field:'discipline',          label:'Discipline',          required:false },
-    { field:'degree_level',        label:'Degree level',        required:false },
-    { field:'gender',              label:'Gender',              required:false },
-    { field:'funding_type',        label:'Funding type',        required:false },
-    { field:'institution_type',    label:'Institution type',    required:false },
-  ];
-  const grid = document.getElementById('mapping-grid');
-  grid.innerHTML = '';
-  // Header
-  grid.appendChild(el('div', { class:'mapping-canonical',style:{fontWeight:'600'} }, 'Canonical field'));
-  grid.appendChild(el('div', {}));
-  grid.appendChild(el('div', { class:'mapping-label',style:{fontWeight:'600'} }, 'Source column'));
-
-  CANONICAL.forEach(({ field, label, required }) => {
-    const canonEl = el('div', { class: `mapping-canonical${required?' mapping-required':''}` }, label);
-
-    const sel = el('select', {
-      class: 'form-select',
-      'data-canonical': field,
-    });
-    const none = el('option', { value: '' }, '— not mapped —');
-    sel.appendChild(none);
-    p.detected_columns.forEach(col => {
-      const opt = el('option', { value: col }, col);
-      sel.appendChild(opt);
-    });
-    sel.value = state.mapping[field] ?? '';
-    sel.addEventListener('change', () => { state.mapping[field] = sel.value || null; });
-
-    grid.appendChild(canonEl);
-    grid.appendChild(el('div', { class: 'mapping-arrow' }, '→'));
-    grid.appendChild(sel);
-  });
-
-  // Sample rows
-  const thead = document.getElementById('preview-thead');
-  const tbody = document.getElementById('preview-tbody');
-  thead.innerHTML = ''; tbody.innerHTML = '';
-  if (p.sample_rows?.length) {
-    const cols = Object.keys(p.sample_rows[0]);
-    const mappedCols = new Set(Object.values(state.mapping).filter(Boolean));
-    const hr = el('tr');
-    cols.forEach(c => {
-      const th = el('th', {}, c);
-      if (mappedCols.has(c)) th.classList.add('col-mapped');
-      hr.appendChild(th);
-    });
-    thead.appendChild(hr);
-    p.sample_rows.slice(0,10).forEach(row => {
-      const tr = el('tr');
-      cols.forEach(c => {
-        const td = el('td', {}, row[c] != null ? String(row[c]) : '');
-        if (mappedCols.has(c)) td.classList.add('col-mapped');
-        tr.appendChild(td);
+    // ── Step navigation ──────────────────────────────────────────────────────
+    function showStep(n) {
+      ['panel-upload', 'panel-preview', 'panel-meta', 'panel-result'].forEach((id, i) => {
+        document.getElementById(id).classList.toggle('hidden', i + 1 !== n);
       });
-      tbody.appendChild(tr);
-    });
-  }
-
-  // Issues
-  const issuePanel = document.getElementById('issues-panel');
-  const issueList  = document.getElementById('issue-list');
-  if (p.issues?.length) {
-    issuePanel.classList.remove('hidden');
-    issueList.innerHTML = '';
-    p.issues.slice(0,50).forEach(i => {
-      issueList.appendChild(el('div', { class: `issue-row ${i.severity}` },
-        el('span', { class: `issue-sev` }, i.severity),
-        el('span', { class: 'issue-field' }, i.field ?? ''),
-        el('span', {}, i.message),
-      ));
-    });
-    if (p.issues.length > 50) {
-      issueList.appendChild(el('div', { style:{ padding:'8px 10px',fontSize:'12px',color:'var(--stone)' } },
-        `…and ${p.issues.length - 50} more issues`));
+      [1, 2, 3, 4].forEach(i => {
+        const s = document.getElementById(`step-${i}`);
+        s.classList.remove('active', 'done');
+        if (i === n) s.classList.add('active');
+        else if (i < n) s.classList.add('done');
+      });
     }
-  } else {
-    issuePanel.classList.add('hidden');
-  }
-}
 
-function goToMeta() {
-  showStep(3);
-  loadMetaOptions();
-}
+    function goBack() { showStep(1); }
 
-// ── Metadata form ────────────────────────────────────────────────────────
-let metaLoaded = false;
+    // ── File type selector ───────────────────────────────────────────────────
+    function selectType(type) {
+      state.type = type;
+      document.getElementById('tab-csv').classList.toggle('active', type === 'csv');
+      document.getElementById('tab-xlsx').classList.toggle('active', type === 'xlsx');
+      document.getElementById('type-hint').textContent = type === 'csv'
+        ? 'CSV: one header row, any delimiter. UTF-8 or UTF-8-BOM.'
+        : 'XLSX: you can choose which sheet to import after uploading.';
+      document.getElementById('drop-zone-hint').textContent =
+        type === 'csv' ? 'Accepts .csv files' : 'Accepts .xlsx, .xls files';
+      document.getElementById('file-input').accept = type === 'csv' ? '.csv' : '.xlsx,.xls';
 
-async function loadMetaOptions() {
-  if (metaLoaded) return;
-  const [srcRes, metRes] = await Promise.all([
-    apiFetch('/api/sources'),
-    apiFetch('/api/datasets'),  // We need metric definitions — use first dataset to get them
-  ]);
+      // Reset file state
+      state.file = null; state.sheets = []; state.selectedSheet = null;
+      document.getElementById('file-chosen').classList.add('hidden');
+      document.getElementById('xlsx-sheet-panel').classList.add('hidden');
+      document.getElementById('btn-preview').disabled = true;
+    }
 
-  if (srcRes.ok) {
-    state.sources = srcRes.data;
-    const sel = document.getElementById('m-source');
-    sel.innerHTML = '<option value="">Select source…</option>';
-    srcRes.data.forEach(s => {
-      sel.appendChild(el('option', { value: s.id },
-        `${s.short_code} — ${fmt.tier(s.reliability_tier)}`));
+    // ── Drag-and-drop ────────────────────────────────────────────────────────
+    const dropZone = document.getElementById('drop-zone');
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault(); dropZone.classList.remove('drag-over');
+      const f = e.dataTransfer.files[0];
+      if (f) handleFile(f);
     });
-  }
-
-  // Metric definitions: fetch via /api/datasets and extract unique metric_definitions,
-  // or fall back to known ones from seed data. There's no standalone /api/metric-definitions
-  // endpoint, but DatasetRead nests metric_definition, so we harvest them here.
-  if (metRes.ok && metRes.data.length > 0) {
-    const seen = new Map();
-    metRes.data.forEach(d => {
-      if (!seen.has(d.metric_definition.id)) seen.set(d.metric_definition.id, d.metric_definition);
+    document.getElementById('file-input').addEventListener('change', e => {
+      if (e.target.files[0]) handleFile(e.target.files[0]);
     });
-    state.metrics = [...seen.values()];
-    const mSel = document.getElementById('m-metric');
-    mSel.innerHTML = '<option value="">Select metric definition…</option>';
-    state.metrics.forEach(m => {
-      mSel.appendChild(el('option', { value: m.id }, `${m.code} — ${m.name}`));
-    });
-    if (state.metrics.length === 1) mSel.value = state.metrics[0].id;
-  } else {
-    document.getElementById('m-metric').innerHTML =
-      '<option value="">No metric definitions found — seed the database first</option>';
-  }
 
-  metaLoaded = true;
-}
+    async function handleFile(file) {
+      state.file = file;
+      document.getElementById('chosen-name').textContent = file.name;
+      document.getElementById('file-chosen').classList.remove('hidden');
+      document.getElementById('upload-error').classList.add('hidden');
 
-// ── Commit ───────────────────────────────────────────────────────────────
-async function commitImport() {
-  const btn = document.getElementById('btn-commit');
-  const errDiv = document.getElementById('meta-error');
-  errDiv.classList.add('hidden');
-
-  const sourceId   = document.getElementById('m-source').value;
-  const metricId   = document.getElementById('m-metric').value;
-  const title      = document.getElementById('m-title').value.trim();
-  const period     = document.getElementById('m-period').value.trim();
-  const limitations = document.getElementById('m-limitations').value.trim();
-
-  if (!sourceId || !metricId || !title || !period || !limitations) {
-    errDiv.innerHTML = '';
-    errDiv.appendChild(el('div', { class: 'alert alert-error' },
-      'All required fields must be filled. Limitations cannot be empty.'));
-    errDiv.classList.remove('hidden');
-    return;
-  }
-
-  // Check for unresolved required ambiguities
-  const unresolvedRequired = (state.preview?.unresolved_required_ambiguities ?? [])
-    .filter(a => a.resolution_required && !state.mapping[a.canonical_field]);
-  if (unresolvedRequired.length > 0) {
-    errDiv.innerHTML = '';
-    errDiv.appendChild(el('div', { class: 'alert alert-error' },
-      `Cannot commit — resolve these required-field ambiguities first: ${unresolvedRequired.map(a=>a.canonical_field).join(', ')}`
-    ));
-    errDiv.classList.remove('hidden');
-    showStep(2);
-    return;
-  }
-
-  btn.disabled = true;
-  document.getElementById('commit-spinner').classList.remove('hidden');
-
-  const fd = new FormData();
-  fd.append('file', state.file);
-  fd.append('source_id', sourceId);
-  fd.append('metric_definition_id', metricId);
-  fd.append('title', title);
-  fd.append('reference_period', period);
-  fd.append('limitations', limitations);
-  fd.append('column_mapping', JSON.stringify(state.mapping));
-  fd.append('include_warnings', document.getElementById('m-include-warnings').checked);
-  fd.append('include_duplicates', document.getElementById('m-include-duplicates').checked);
-  if (document.getElementById('m-url').value) fd.append('original_url', document.getElementById('m-url').value);
-  if (document.getElementById('m-pubdate').value) fd.append('publication_date', document.getElementById('m-pubdate').value);
-  if (state.type === 'xlsx' && state.selectedSheet) fd.append('sheet_name', state.selectedSheet);
-
-  const path = state.type === 'csv'
-    ? '/api/datasets/import/csv'
-    : '/api/datasets/import/xlsx';
-
-  const res = await apiFormData(path, fd);
-  document.getElementById('commit-spinner').classList.add('hidden');
-  btn.disabled = false;
-
-  if (!res.ok) {
-    const detail = res.data?.detail;
-    const msg = typeof detail === 'string' ? detail
-      : detail?.message ?? JSON.stringify(detail) ?? res.error ?? 'Commit failed';
-    errDiv.innerHTML = '';
-    errDiv.appendChild(el('div', { class: 'alert alert-error' }, msg));
-    errDiv.classList.remove('hidden');
-    return;
-  }
-
-  renderResult(res.data);
-  showStep(4);
-}
-
-function renderResult(result) {
-  const body = document.getElementById('commit-result-body');
-  body.innerHTML = '';
-
-  const inserted  = result.inserted  ?? 0;
-  const skipped   = result.skipped   ?? 0;
-  const datasetId = result.dataset_id ?? '—';
-
-  body.appendChild(el('div', { class: 'commit-icon' }, '✓'));
-  body.appendChild(el('div', { class: 'commit-title' }, 'Import successful'));
-  body.appendChild(el('div', { class: 'commit-sub' },
-    `Dataset #${datasetId} registered. ${inserted} observation${inserted!==1?'s':''} committed.`));
-
-  body.appendChild(el('div', { class: 'commit-stats' },
-    el('div', { class: 'commit-stat ok' },
-      el('div', { class: 'commit-stat-val' }, String(inserted)),
-      el('div', { class: 'commit-stat-label' }, 'Rows inserted'),
-    ),
-    el('div', { class: 'commit-stat skip' },
-      el('div', { class: 'commit-stat-val' }, String(skipped)),
-      el('div', { class: 'commit-stat-label' }, 'Rows skipped'),
-    ),
-  ));
-
-  body.appendChild(el('div', { style:{ display:'flex',gap:'12px',justifyContent:'center' } },
-    (() => {
-      const a = el('a', { class:'btn btn-primary', href:`datasets.html` }, 'View all datasets');
-      return a;
-    })(),
-    (() => {
-      const btn = el('button', { class:'btn btn-outline', type:'button' }, 'Import another file');
-      btn.addEventListener('click', () => {
-        state = { type:'csv', file:null, sheets:[], selectedSheet:null, preview:null, mapping:{}, sources:[], metrics:[] };
-        metaLoaded = false;
-        document.getElementById('file-input').value = '';
-        document.getElementById('file-chosen').classList.add('hidden');
-        document.getElementById('upload-error').classList.add('hidden');
+      if (state.type === 'xlsx') {
         document.getElementById('btn-preview').disabled = true;
-        selectType('csv');
-        showStep(1);
+        // List sheets first
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await apiFormData('/api/datasets/import/xlsx/sheets', fd);
+        if (!res.ok) {
+          showUploadError(`Could not read workbook: ${res.data?.detail ?? res.error ?? 'Unknown error'}`);
+          return;
+        }
+        state.sheets = res.data.sheets ?? [];
+        renderSheets(state.sheets);
+      } else {
+        state.selectedSheet = null;
+        document.getElementById('xlsx-sheet-panel').classList.add('hidden');
+        document.getElementById('btn-preview').disabled = false;
+      }
+    }
+
+    function renderSheets(sheets) {
+      const panel = document.getElementById('xlsx-sheet-panel');
+      const list = document.getElementById('sheet-list');
+      list.innerHTML = '';
+      sheets.forEach(name => {
+        const btn = el('button', { class: 'sheet-btn', type: 'button' }, name);
+        btn.addEventListener('click', () => {
+          state.selectedSheet = name;
+          list.querySelectorAll('.sheet-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          document.getElementById('btn-preview').disabled = false;
+        });
+        list.appendChild(btn);
       });
-      return btn;
-    })(),
-  ));
-}
-</script>
+      panel.classList.remove('hidden');
+      // Auto-select first
+      if (sheets.length === 1) list.querySelector('.sheet-btn').click();
+    }
+
+    function showUploadError(msg) {
+      const div = document.getElementById('upload-error');
+      div.innerHTML = '';
+      div.appendChild(el('div', { class: 'alert alert-error' }, msg));
+      div.classList.remove('hidden');
+    }
+
+    // ── Preview ──────────────────────────────────────────────────────────────
+    async function runPreview() {
+      const btn = document.getElementById('btn-preview');
+      btn.disabled = true;
+      document.getElementById('preview-spinner').classList.remove('hidden');
+      document.getElementById('upload-error').classList.add('hidden');
+
+      const fd = new FormData();
+      fd.append('file', state.file);
+      if (state.type === 'xlsx' && state.selectedSheet) {
+        fd.append('sheet_name', state.selectedSheet);
+      }
+
+      const path = state.type === 'csv'
+        ? '/api/datasets/import/csv/preview'
+        : '/api/datasets/import/xlsx/preview';
+
+      const res = await apiFormData(path, fd);
+      document.getElementById('preview-spinner').classList.add('hidden');
+      btn.disabled = false;
+
+      if (!res.ok) {
+        showUploadError(`Preview failed: ${res.data?.detail ?? res.error ?? 'Unknown error'}`);
+        return;
+      }
+
+      state.preview = res.data;
+      state.mapping = { ...res.data.mapping_used };
+      renderPreview(res.data);
+      showStep(2);
+    }
+
+    function renderPreview(p) {
+      // Summary tiles
+      const s = p.summary;
+      const tiles = document.getElementById('summary-tiles');
+      tiles.innerHTML = '';
+      const mkTile = (val, label, cls = '') =>
+        el('div', { class: `summary-tile ${cls}` },
+          el('div', { class: 'summary-tile-val' }, String(val)),
+          el('div', { class: 'summary-tile-label' }, label),
+        );
+      tiles.appendChild(mkTile(s.total_records, 'Total rows', ''));
+      tiles.appendChild(mkTile(s.valid_records, 'Valid rows', s.valid_records > 0 ? 'ok' : ''));
+      tiles.appendChild(mkTile(s.error_records, 'Error rows', s.error_records > 0 ? 'err' : ''));
+      tiles.appendChild(mkTile(s.duplicate_records, 'Duplicates', s.duplicate_records > 0 ? 'warn' : ''));
+
+      // Ambiguities
+      const ambPanel = document.getElementById('ambiguity-panel');
+      const ambList = document.getElementById('ambiguity-list');
+      if (p.ambiguities?.length) {
+        ambPanel.classList.remove('hidden');
+        ambList.innerHTML = '';
+        p.ambiguities.forEach(amb => {
+          const item = el('div', { class: 'ambiguity-item' },
+            el('div', { class: 'ambiguity-field' },
+              `${amb.canonical_field}${amb.required ? ' (required)' : ''} — ${amb.reason}`
+            ),
+            el('div', { class: 'ambiguity-candidates' },
+              ...amb.candidates.map(c => {
+                const btn = el('button', { class: 'ambiguity-candidate', type: 'button' }, c.column);
+                btn.addEventListener('click', () => {
+                  item.querySelectorAll('.ambiguity-candidate').forEach(b => b.classList.remove('selected'));
+                  btn.classList.add('selected');
+                  state.mapping[amb.canonical_field] = c.column;
+                  // Update the corresponding select in the mapping grid
+                  const sel = document.querySelector(`select[data-canonical="${amb.canonical_field}"]`);
+                  if (sel) sel.value = c.column;
+                });
+                // If currently mapped to this column, pre-select it
+                if (state.mapping[amb.canonical_field] === c.column) btn.classList.add('selected');
+                return btn;
+              })
+            )
+          );
+          ambList.appendChild(item);
+        });
+      } else {
+        ambPanel.classList.add('hidden');
+      }
+
+      // Mapping editor
+      const CANONICAL = [
+        { field: 'destination_country', label: 'Destination country', required: true },
+        { field: 'student_count', label: 'Student count', required: true },
+        { field: 'academic_year', label: 'Academic year', required: false },
+        { field: 'nigerian_state', label: 'Nigerian state', required: false },
+        { field: 'institution', label: 'Institution', required: false },
+        { field: 'discipline', label: 'Discipline', required: false },
+        { field: 'degree_level', label: 'Degree level', required: false },
+        { field: 'gender', label: 'Gender', required: false },
+        { field: 'funding_type', label: 'Funding type', required: false },
+        { field: 'institution_type', label: 'Institution type', required: false },
+      ];
+      const grid = document.getElementById('mapping-grid');
+      grid.innerHTML = '';
+      // Header
+      grid.appendChild(el('div', { class: 'mapping-canonical', style: { fontWeight: '600' } }, 'Canonical field'));
+      grid.appendChild(el('div', {}));
+      grid.appendChild(el('div', { class: 'mapping-label', style: { fontWeight: '600' } }, 'Source column'));
+
+      CANONICAL.forEach(({ field, label, required }) => {
+        const canonEl = el('div', { class: `mapping-canonical${required ? ' mapping-required' : ''}` }, label);
+
+        const sel = el('select', {
+          class: 'form-select',
+          'data-canonical': field,
+        });
+        const none = el('option', { value: '' }, '— not mapped —');
+        sel.appendChild(none);
+        p.detected_columns.forEach(col => {
+          const opt = el('option', { value: col }, col);
+          sel.appendChild(opt);
+        });
+        sel.value = state.mapping[field] ?? '';
+        sel.addEventListener('change', () => { state.mapping[field] = sel.value || null; });
+
+        grid.appendChild(canonEl);
+        grid.appendChild(el('div', { class: 'mapping-arrow' }, '→'));
+        grid.appendChild(sel);
+      });
+
+      // Sample rows
+      const thead = document.getElementById('preview-thead');
+      const tbody = document.getElementById('preview-tbody');
+      thead.innerHTML = ''; tbody.innerHTML = '';
+      if (p.sample_rows?.length) {
+        const cols = Object.keys(p.sample_rows[0]);
+        const mappedCols = new Set(Object.values(state.mapping).filter(Boolean));
+        const hr = el('tr');
+        cols.forEach(c => {
+          const th = el('th', {}, c);
+          if (mappedCols.has(c)) th.classList.add('col-mapped');
+          hr.appendChild(th);
+        });
+        thead.appendChild(hr);
+        p.sample_rows.slice(0, 10).forEach(row => {
+          const tr = el('tr');
+          cols.forEach(c => {
+            const td = el('td', {}, row[c] != null ? String(row[c]) : '');
+            if (mappedCols.has(c)) td.classList.add('col-mapped');
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+      }
+
+      // Issues
+      const issuePanel = document.getElementById('issues-panel');
+      const issueList = document.getElementById('issue-list');
+      if (p.issues?.length) {
+        issuePanel.classList.remove('hidden');
+        issueList.innerHTML = '';
+        p.issues.slice(0, 50).forEach(i => {
+          issueList.appendChild(el('div', { class: `issue-row ${i.severity}` },
+            el('span', { class: `issue-sev` }, i.severity),
+            el('span', { class: 'issue-field' }, i.field ?? ''),
+            el('span', {}, i.message),
+          ));
+        });
+        if (p.issues.length > 50) {
+          issueList.appendChild(el('div', { style: { padding: '8px 10px', fontSize: '12px', color: 'var(--stone)' } },
+            `…and ${p.issues.length - 50} more issues`));
+        }
+      } else {
+        issuePanel.classList.add('hidden');
+      }
+    }
+
+    function goToMeta() {
+      showStep(3);
+      loadMetaOptions();
+    }
+
+    // ── Metadata form ────────────────────────────────────────────────────────
+    let metaLoaded = false;
+
+    async function loadMetaOptions() {
+      if (metaLoaded) return;
+      const [srcRes, metRes] = await Promise.all([
+        apiFetch('/api/sources'),
+        apiFetch('/api/datasets'),  // We need metric definitions — use first dataset to get them
+      ]);
+
+      if (srcRes.ok) {
+        state.sources = srcRes.data;
+        const sel = document.getElementById('m-source');
+        sel.innerHTML = '<option value="">Select source…</option>';
+        srcRes.data.forEach(s => {
+          sel.appendChild(el('option', { value: s.id },
+            `${s.short_code} — ${fmt.tier(s.reliability_tier)}`));
+        });
+      }
+
+      // Metric definitions: fetch via /api/datasets and extract unique metric_definitions,
+      // or fall back to known ones from seed data. There's no standalone /api/metric-definitions
+      // endpoint, but DatasetRead nests metric_definition, so we harvest them here.
+      if (metRes.ok && metRes.data.length > 0) {
+        const seen = new Map();
+        metRes.data.forEach(d => {
+          if (!seen.has(d.metric_definition.id)) seen.set(d.metric_definition.id, d.metric_definition);
+        });
+        state.metrics = [...seen.values()];
+        const mSel = document.getElementById('m-metric');
+        mSel.innerHTML = '<option value="">Select metric definition…</option>';
+        state.metrics.forEach(m => {
+          mSel.appendChild(el('option', { value: m.id }, `${m.code} — ${m.name}`));
+        });
+        if (state.metrics.length === 1) mSel.value = state.metrics[0].id;
+      } else {
+        document.getElementById('m-metric').innerHTML =
+          '<option value="">No metric definitions found — seed the database first</option>';
+      }
+
+      metaLoaded = true;
+    }
+
+    // ── Commit ───────────────────────────────────────────────────────────────
+    async function commitImport() {
+      const btn = document.getElementById('btn-commit');
+      const errDiv = document.getElementById('meta-error');
+      errDiv.classList.add('hidden');
+
+      const sourceId = document.getElementById('m-source').value;
+      const metricId = document.getElementById('m-metric').value;
+      const title = document.getElementById('m-title').value.trim();
+      const period = document.getElementById('m-period').value.trim();
+      const limitations = document.getElementById('m-limitations').value.trim();
+
+      if (!sourceId || !metricId || !title || !period || !limitations) {
+        errDiv.innerHTML = '';
+        errDiv.appendChild(el('div', { class: 'alert alert-error' },
+          'All required fields must be filled. Limitations cannot be empty.'));
+        errDiv.classList.remove('hidden');
+        return;
+      }
+
+      // Check for unresolved required ambiguities
+      const unresolvedRequired = (state.preview?.unresolved_required_ambiguities ?? [])
+        .filter(a => a.resolution_required && !state.mapping[a.canonical_field]);
+      if (unresolvedRequired.length > 0) {
+        errDiv.innerHTML = '';
+        errDiv.appendChild(el('div', { class: 'alert alert-error' },
+          `Cannot commit — resolve these required-field ambiguities first: ${unresolvedRequired.map(a => a.canonical_field).join(', ')}`
+        ));
+        errDiv.classList.remove('hidden');
+        showStep(2);
+        return;
+      }
+
+      btn.disabled = true;
+      document.getElementById('commit-spinner').classList.remove('hidden');
+
+      const fd = new FormData();
+      fd.append('file', state.file);
+      fd.append('source_id', sourceId);
+      fd.append('metric_definition_id', metricId);
+      fd.append('title', title);
+      fd.append('reference_period', period);
+      fd.append('limitations', limitations);
+      fd.append('column_mapping', JSON.stringify(state.mapping));
+      fd.append('include_warnings', document.getElementById('m-include-warnings').checked);
+      fd.append('include_duplicates', document.getElementById('m-include-duplicates').checked);
+      if (document.getElementById('m-url').value) fd.append('original_url', document.getElementById('m-url').value);
+      if (document.getElementById('m-pubdate').value) fd.append('publication_date', document.getElementById('m-pubdate').value);
+      if (state.type === 'xlsx' && state.selectedSheet) fd.append('sheet_name', state.selectedSheet);
+
+      const path = state.type === 'csv'
+        ? '/api/datasets/import/csv'
+        : '/api/datasets/import/xlsx';
+
+      const res = await apiFormData(path, fd);
+      document.getElementById('commit-spinner').classList.add('hidden');
+      btn.disabled = false;
+
+      if (!res.ok) {
+        const detail = res.data?.detail;
+        const msg = typeof detail === 'string' ? detail
+          : detail?.message ?? JSON.stringify(detail) ?? res.error ?? 'Commit failed';
+        errDiv.innerHTML = '';
+        errDiv.appendChild(el('div', { class: 'alert alert-error' }, msg));
+        errDiv.classList.remove('hidden');
+        return;
+      }
+
+      renderResult(res.data);
+      showStep(4);
+    }
+
+    function renderResult(result) {
+      const body = document.getElementById('commit-result-body');
+      body.innerHTML = '';
+
+      const inserted = result.inserted ?? 0;
+      const skipped = result.skipped ?? 0;
+      const datasetId = result.dataset_id ?? '—';
+
+      body.appendChild(el('div', { class: 'commit-icon' }, '✓'));
+      body.appendChild(el('div', { class: 'commit-title' }, 'Import successful'));
+      body.appendChild(el('div', { class: 'commit-sub' },
+        `Dataset #${datasetId} registered. ${inserted} observation${inserted !== 1 ? 's' : ''} committed.`));
+
+      body.appendChild(el('div', { class: 'commit-stats' },
+        el('div', { class: 'commit-stat ok' },
+          el('div', { class: 'commit-stat-val' }, String(inserted)),
+          el('div', { class: 'commit-stat-label' }, 'Rows inserted'),
+        ),
+        el('div', { class: 'commit-stat skip' },
+          el('div', { class: 'commit-stat-val' }, String(skipped)),
+          el('div', { class: 'commit-stat-label' }, 'Rows skipped'),
+        ),
+      ));
+
+      body.appendChild(el('div', { style: { display: 'flex', gap: '12px', justifyContent: 'center' } },
+        (() => {
+          const a = el('a', { class: 'btn btn-primary', href: `datasets.html` }, 'View all datasets');
+          return a;
+        })(),
+        (() => {
+          const btn = el('button', { class: 'btn btn-outline', type: 'button' }, 'Import another file');
+          btn.addEventListener('click', () => {
+            state = { type: 'csv', file: null, sheets: [], selectedSheet: null, preview: null, mapping: {}, sources: [], metrics: [] };
+            metaLoaded = false;
+            document.getElementById('file-input').value = '';
+            document.getElementById('file-chosen').classList.add('hidden');
+            document.getElementById('upload-error').classList.add('hidden');
+            document.getElementById('btn-preview').disabled = true;
+            selectType('csv');
+            showStep(1);
+          });
+          return btn;
+        })(),
+      ));
+    }
+ checkAuth();</script>
 </body>
+
 </html>
