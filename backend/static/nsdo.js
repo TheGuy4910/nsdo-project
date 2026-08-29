@@ -220,10 +220,7 @@ function navHTML(activePage) {
         </a>`).join('')}
     </div>
     <div class="nav-status">
-<a href="login.html" id="nav-signin-link" style="color:inherit;text-decoration:none;margin-right:14px;font-size:13px;">Sign in</a>
-<span class="nav-status-dot" id="nav-status-dot"></span>
-<span id="nav-status-text">Checking…</span>
-</div>
+<span id="nav-auth-slot">${auth.isSignedIn() ? '<span style="margin-right:14px;font-size:13px;">Signed in (' + (auth.getRole() || 'user') + ')</span> <a href="#" onclick="window.NSDO.auth.clearToken(); location.reload(); return false;" style="color:inherit;text-decoration:none;margin-right:14px;font-size:13px;">Sign out</a>' : '<a href="login.html" style="color:inherit;text-decoration:none;margin-right:14px;font-size:13px;">Sign in</a>'}</span></div>
   </div>
 </nav>`;
 }
