@@ -194,7 +194,6 @@ async function loadDashboard() {
   document.getElementById('s-datasets').textContent = datasets.length;
   document.getElementById('s-sources').textContent  = sources.length;
 
-  // Country cards — only non-deprecated, non-global, non-unverified datasets
   const eligible = datasets.filter(d =>
     d.destination_country !== 'All destinations (global aggregate)' &&
     d.source.reliability_tier !== 'unverified' &&
@@ -206,7 +205,6 @@ async function loadDashboard() {
     (byCountry[c] = byCountry[c] || []).push(d);
   });
 
-  // Build observation lookup: dataset_id -> [observations]
   const obsByDataset = {};
   observations.forEach(o => {
     (obsByDataset[o.dataset_id] = obsByDataset[o.dataset_id] || []).push(o);
@@ -221,13 +219,11 @@ async function loadDashboard() {
     return;
   }
 
-  // Compute max value across all countries for the bar chart proportion
   const countryLatest = {};
   countries.forEach(country => {
     const sorted = [...byCountry[country]].sort((a,b) => b.reference_period.localeCompare(a.reference_period));
     const latest = sorted[0];
     const obs = (obsByDataset[latest.id] || []);
-    // Sum all observations for this dataset (aggregate across any sub-dimensions)
     const total = obs.length > 0 ? obs.reduce((sum, o) => sum + o.value, 0) : null;
     countryLatest[country] = { dataset: latest, value: total };
   });
@@ -262,7 +258,6 @@ async function loadDashboard() {
     ));
   });
 
-  // Sources table
   const dsPerSrc = {};
   datasets.forEach(d => { dsPerSrc[d.source.id] = (dsPerSrc[d.source.id]||0)+1; });
   const tbody = document.getElementById('sources-tbody');
@@ -280,8 +275,6 @@ async function loadDashboard() {
 
   buildChart(datasets, observations);
 
-  // Decision A (Phase 5): mandatory amber comparability warning whenever the
-  // dashboard chart shows series with different metric_definition_ids.
   const compatRes = await apiFetch('/api/analytics/dashboard-comparability');
   if (compatRes.ok) {
     const compat = compatRes.data.comparability;
@@ -310,14 +303,11 @@ function buildChart(datasets, observations) {
     'Canada':         { color: '#D4820A', label: 'Canada (IRCC via press)' },
   };
 
-  // Build chart points from real observation data returned by /api/observations.
-  // Group observations by (destination_country, academic_year or dataset.reference_period).
   const obsByDataset = {};
   observations.forEach(o => {
     (obsByDataset[o.dataset_id] = obsByDataset[o.dataset_id] || []).push(o);
   });
 
-  // For each series country, collect (period, total_value) from the API
   const verified = {};
   Object.keys(SERIES).forEach(country => {
     const countryDatasets = datasets.filter(d =>
@@ -329,7 +319,6 @@ function buildChart(datasets, observations) {
       if (obs.length === 0) return;
       const period = ds.reference_period;
       const total  = obs.reduce((s, o) => s + o.value, 0);
-      // Keep only the highest-value entry per period (avoids double-counting if duplicate datasets)
       if (!periodTotals[period] || total > periodTotals[period]) {
         periodTotals[period] = total;
       }
@@ -363,7 +352,6 @@ function buildChart(datasets, observations) {
   const xS = p => PAD.left + (allPeriods.indexOf(p) / Math.max(allPeriods.length-1,1)) * pW;
   const yS = v => PAD.top + pH - (v / maxY) * pH;
 
-  // Grid
   [0, .25, .5, .75, 1].forEach(f => {
     const tick = Math.round(f * maxY), y = yS(tick);
     svg.appendChild(mk('line', {x1:PAD.left,y1:y,x2:PAD.left+pW,y2:y,stroke:'var(--rule)','stroke-width':'1','stroke-dasharray':'3 3'}));
@@ -372,13 +360,11 @@ function buildChart(datasets, observations) {
     svg.appendChild(t);
   });
 
-  // X labels
   allPeriods.forEach(p => {
     const t = mk('text', {x:xS(p),y:H-4,'text-anchor':'middle','font-size':'10','font-family':"'DM Mono',monospace",fill:'var(--stone)'});
     t.textContent = p; svg.appendChild(t);
   });
 
-  // Series
   Object.entries(SERIES).forEach(([country, {color, label}]) => {
     const pts = verified[country];
     if (!pts?.length) return;
