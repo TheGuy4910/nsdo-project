@@ -2,6 +2,7 @@
    NSDO — Nigerian Student Diaspora Observatory
    Shared design system
    ========================================================= */
+.hidden { display: none !important; }
 
 /* --- Fonts --- */
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
