@@ -64,6 +64,15 @@ SOURCES = [
         "notes": "Figures on Nigerian DAAD scholarship recipients drawn from DAAD's 2023 Annual Report, as reported via secondary sources; the primary Annual Report PDF was not directly consulted. Counts only DAAD-funded scholars, not total enrolled Nigerian students in Germany.",
     },
     {
+    "short_code": "WENR",
+    "name": "World Education News + Reviews (WENR)",
+    "organization_type": "ngo_or_press",
+    "home_country": "Malaysia",
+    "url": "https://wenr.wes.org/2023/01/education-in-malaysia-2",
+    "reliability_tier": "credible_secondary",
+    "notes": "Nigerian enrollment figures reported in WENR's education-country-profile article on Malaysia, drawing on Malaysian higher-education data. A conflicting press-reported estimate (~13,000/year pre-COVID, ~4,000 in 2022, per a Malaysian government envoy quoted in Nigerian press) exists but was not used as the primary figure, since it is a secondhand spoken estimate rather than a published dataset.",
+},
+    {
         "short_code": "PRESS_IRCC",
         "name": "News reporting citing Immigration, Refugees and Citizenship Canada",
         "organization_type": "ngo_or_press",
@@ -134,6 +143,12 @@ METRIC_DEFINITIONS = [
     "description": "Nigerian students who received DAAD funding in the given year, as reported in DAAD's Annual Report. This is NOT a total enrolled-student headcount — it counts only scholarship recipients, a subset of all Nigerian students in Germany, and is therefore not directly comparable to HESA or Open Doors enrollment figures.",
     "unit": "count of individuals",
 },
+{
+    "code": "wenr_reported_enrollment",
+    "name": "WENR-reported Nigerian enrollment",
+    "description": "Nigerian student enrollment in Malaysian higher education institutions, as reported by WENR citing Malaysian education data. Likely represents a total enrollment headcount, but the underlying methodology was not independently verified, so this is kept as a distinct metric rather than merged with HESA/Open Doors enrollment figures.",
+    "unit": "count of individuals",
+},
 ]
 
 # Each dataset = one registered release. reference_period stays a string because
@@ -148,6 +163,14 @@ DATASETS = [
     "original_url": "https://www.daad.de",
     "limitations": "Counts DAAD-funded scholarship recipients only, not total enrolled Nigerian students in Germany; not comparable to HESA/Open Doors enrollment headcounts. Sourced via secondary reporting of DAAD's 2023 Annual Report, not the primary document itself.",
     "observations": [{"value": 1638}],
+},
+{
+    "source": "WENR", "metric": "wenr_reported_enrollment",
+    "title": "WENR Malaysia country profile — Nigerian student enrollment",
+    "destination_country": "Malaysia", "reference_period": "2020",
+    "original_url": "https://wenr.wes.org/2023/01/education-in-malaysia-2",
+    "limitations": "Reported by WENR citing Malaysian higher-education data; underlying primary source and methodology not independently verified. A conflicting press-reported estimate (~13,000/year pre-COVID, ~4,000 in 2022, per a Malaysian government envoy) exists but is not used here, as it is a secondhand spoken figure rather than a published dataset. Peak enrollment was reported at 14,705 in 2016 before declining.",
+    "observations": [{"value": 4329}],
 },
     {
         "source": "HESA", "metric": "hesa_enrolled_headcount",
