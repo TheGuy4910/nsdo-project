@@ -299,6 +299,7 @@ tbody td { padding: 10px 14px; vertical-align: middle; }
 /* --- Responsive --- */
 @media (max-width: 900px) {
   .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .stat-grid { grid-template-columns: 1fr 1fr; }
   .page-content { padding: 0 16px 48px; }
 }
 @media (max-width: 640px) {
